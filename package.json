@@ -1,0 +1,43 @@
+{
+  "name": "project-tugas-akhir",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "deploy:staging": "npm run build && firebase deploy --only hosting:development"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.0",
+    "axios": "^1.7.9",
+    "html2canvas": "^1.4.1",
+    "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
+    "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.469.0",
+    "next": "14.2.15",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-feather": "^2.0.10",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^6.28.0",
+    "react-to-print": "^3.0.5",
+    "sweetalert2": "^11.17.2",
+    "terbilang-js": "^1.0.1",
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.15",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
