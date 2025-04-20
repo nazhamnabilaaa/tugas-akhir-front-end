@@ -30,9 +30,6 @@ export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedKonfigurasi, setSelectedKonfigurasi] = useState<KonfigurasiSatker | null>(null)
   const [konfigurasi, setKonfigurasi] = useState<KonfigurasiSatker[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [filteredData, setFilteredData] = useState<KonfigurasiSatker[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [entries, setEntries] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
@@ -41,7 +38,6 @@ export default function Page() {
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -52,7 +48,7 @@ export default function Page() {
         router.push("/")
       } else {
         try {
-          const decoded = jwtDecode<{ exp: number; namalengkap: string }>(accessToken)
+          const decoded = jwtDecode<{ exp: number }>(accessToken)
           const currentTime = Math.floor(Date.now() / 1000)
 
           if (decoded.exp && decoded.exp < currentTime) {
@@ -61,7 +57,6 @@ export default function Page() {
             router.push("/") // Redirect ke login
           } else {
             setToken(accessToken)
-            setNamalengkap(decoded.namalengkap)
           }
         } catch (err) {
           console.error("Error decoding token:", err)
@@ -69,7 +64,7 @@ export default function Page() {
         }
       }
     }
-  }, [])
+  }, [router]) // Menambahkan router ke dalam dependensi
 
   useEffect(() => {
     if (!token) return
@@ -80,22 +75,18 @@ export default function Page() {
           headers: { Authorization: `Bearer ${token}` },
         })
 
-        // Ambil hanya data yang bisa di-map
         setKonfigurasi(response.data.Data[0] || [])
       } catch (error) {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        setError("Gagal mengambil data Satuan Kerja Universitas")
-      } finally {
-        setLoading(false)
       }
     }
 
     getSatker()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, router]) // Menambahkan router ke dalam dependensi
 
-  const handleSave = async (data: any) => {
+  const handleSave = async (data: KonfigurasiSatker) => {
     const result = await Swal.fire({
       title: "Simpan Data?",
       text: "Apakah Anda yakin ingin memperbarui Data Satuan Kerja ini?",
@@ -110,14 +101,12 @@ export default function Page() {
     if (!result.isConfirmed) return // Jika batal, hentikan proses
 
     if (selectedKonfigurasi) {
-      // Edit data yang sudah ada
       setKonfigurasi((prevKonfigurasi) =>
         prevKonfigurasi.map((item) => (item.kdsatker === selectedKonfigurasi.kdsatker ? data : item)),
       )
 
       Swal.fire("Berhasil!", "Data berhasil diperbarui.", "success")
     } else {
-      // Cek apakah `kdsatker` sudah ada
       const isDuplicate = konfigurasi.some((item) => item.kdsatker === data.kdsatker)
 
       if (isDuplicate) {
@@ -125,22 +114,9 @@ export default function Page() {
         return
       }
 
-      // Tambah data baru
       setKonfigurasi((prevKonfigurasi) => [
         ...prevKonfigurasi,
-        {
-          kdsatker: data.kdsatker,
-          nmsatker: data.nmsatker,
-          kdkppn: data.kdkppn,
-          nmkppn: data.nmkppn,
-          email: data.email,
-          notelp: data.notelp,
-          npwp: data.npwp,
-          nmppk: data.nmppk,
-          kota: data.kota,
-          provinsi: data.provinsi,
-          alamat: data.alamat,
-        },
+        { ...data },
       ])
 
       Swal.fire("Berhasil!", "Data baru berhasil ditambahkan.", "success")
@@ -152,7 +128,7 @@ export default function Page() {
 
   const handleEdit = (item: KonfigurasiSatker) => {
     setSelectedKonfigurasi(item)
-    setIsModalOpen(true) // Menampilkan modal edit
+    setIsModalOpen(true)
   }
 
   const handleDelete = async (kdsatker: string) => {
@@ -170,14 +146,12 @@ export default function Page() {
 
       if (!result.isConfirmed) return
 
-      // Mengirim permintaan DELETE ke API
       await axiosInstance.delete(`${apiUrl}/satkeruniv/${kdsatker}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
       Swal.fire("Berhasil!", "Data berhasil dihapus.", "success")
 
-      // Perbarui state untuk menghapus data dari daftar
       setKonfigurasi((prevKonfigurasi) => prevKonfigurasi.filter((item) => item.kdsatker !== kdsatker))
     } catch (error) {
       console.error("Error deleting data:", error)
@@ -192,16 +166,11 @@ export default function Page() {
       (item) => item.kdsatker.includes(searchTerm) || item.nmsatker.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
-    // Calculate start and end indices for current page
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
 
     setFilteredData(filtered.slice(startIndex, endIndex))
   }, [searchTerm, currentPage, itemsPerPage, konfigurasi])
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-  }
 
   const totalItems = konfigurasi.filter(
     (item) => item.kdsatker.includes(searchTerm) || item.nmsatker.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -210,14 +179,9 @@ export default function Page() {
 
   return (
     <div className="flex flex-col">
-      {/* Navbar */}
       <AdminNavbar />
-
       <div className="flex">
-        {/* Sidebar */}
         <Sidebar />
-
-        {/* Main Content */}
         <section className="flex-1 text-black px-16">
           <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-6">
             <div className="flex justify-between items-center mb-4">
@@ -274,75 +238,64 @@ export default function Page() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.length > 0 ? (
-                  filteredData.map((item, index) => (
-                    <tr key={index} className="border">
-                      <td className="px-6 border border-gray-300 py-4 text-center">{item.kdsatker}</td>
-                      <td className="px-6 border border-gray-300 py-4 text-center">{item.nmsatker}</td>
-                      <td className="px-6 border border-gray-300 py-4 text-center">{item.alamat}</td>
-                      <td className="px-6 border border-gray-300 py-4 text-center">{item.kota}</td>
-                      <td className="px-6 border border-gray-300 py-4 text-center">
-                        <div className="flex justify-center space-x-2">
-                          <FiEdit
-                            className="text-[#2552F4] text-lg cursor-pointer"
-                            onClick={() => handleEdit(item)} // Edit data
-                          />
-                          <TbTrash
-                            className="text-[#E20202] text-lg cursor-pointer"
-                            onClick={() => handleDelete(item.kdsatker)} // Hapus data
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="text-center py-4">
-                      Tidak ada data ditemukan
+                {filteredData.map((satker) => (
+                  <tr key={satker.kdsatker} className="border">
+                    <td className="border border-gray-300 px-6 py-4 text-center">{satker.kdsatker}</td>
+                    <td className="border border-gray-300 px-6 py-4 text-center">{satker.nmsatker}</td>
+                    <td className="border border-gray-300 px-6 py-4 text-center">{satker.alamat}</td>
+                    <td className="border border-gray-300 px-6 py-4 text-center">{satker.kota}</td>
+                    <td className="border border-gray-300 px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleEdit(satker)}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <FiEdit />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(satker.kdsatker)}
+                        className="text-red-500 hover:text-red-700 ml-2"
+                      >
+                        <TbTrash />
+                      </button>
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
-
-            <div className="flex justify-end mt-4">
+            <div className="mt-4 flex justify-between items-center">
+              <div>
+                <span>
+                  {`Menampilkan ${startIndex + 1}-${endIndex} dari ${totalItems} entri`}
+                </span>
+              </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  className="bg-gray-200 px-4 py-2 rounded-md"
                 >
-                  ‹
+                  Prev
                 </button>
-
-                {/* Single page number button */}
-                <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
-                  {currentPage}
-                </span>
-
                 <button
-                  onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  className="bg-gray-200 px-4 py-2 rounded-md"
                 >
-                  ›
+                  Next
                 </button>
               </div>
             </div>
           </div>
-
-          {/* Modal untuk menambah atau mengedit data */}
-          <AddKonfigurasiSatkerModal
-            isOpen={isModalOpen}
-            onClose={() => {
-              setIsModalOpen(false)
-              setSelectedKonfigurasi(null) // Reset data yang sedang diedit
-            }}
-            onSave={handleSave}
-            initialData={selectedKonfigurasi} // Kirim data yang dipilih untuk diedit
-          />
         </section>
       </div>
+
+      {isModalOpen && (
+        <AddKonfigurasiSatkerModal
+          onSave={handleSave}
+          selectedKonfigurasi={selectedKonfigurasi}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

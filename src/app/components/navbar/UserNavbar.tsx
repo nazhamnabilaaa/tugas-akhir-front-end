@@ -18,8 +18,7 @@ const UserNavbar = () => {
   const axiosInstance = useAxios();
   const router = useRouter();
   const apiUrl = "http://localhost:8080";
-  const [token, setToken] = useState("");
-  const [uuid, setUUID] = useState("");
+  const [uuid, setUUID] = useState(""); // Hapus token karena tidak digunakan
 
   const isActive = (path: string) =>
     pathname.startsWith(path) ? "text-[#004AAD]" : "";
@@ -72,7 +71,6 @@ const UserNavbar = () => {
             localStorage.removeItem("accessToken"); // Hapus token expired
             router.push("/"); // Redirect ke login
           } else {
-            setToken(accessToken);
             setUUID(decoded.uuid);
           }
         } catch (err) {
@@ -81,7 +79,7 @@ const UserNavbar = () => {
         }
       }
     }
-  }, []);
+  }, [router]); // Menambahkan router ke dalam daftar dependensi
 
   const handleLogout = async () => {
     const result = await Swal.fire({
@@ -128,8 +126,6 @@ const UserNavbar = () => {
       }
     }
   };
-
-
 
   return (
     <div className="w-full border-b border-gray-200 bg-white">

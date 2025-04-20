@@ -2,10 +2,10 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import type { User } from "@/types/user"
 import Swal from "sweetalert2"
 import useAxios from "../useAxios"
+import { AxiosError } from "axios"  // Import AxiosError untuk tipe error
 
 interface AddUserModalProps {
   isOpen: boolean
@@ -15,7 +15,6 @@ interface AddUserModalProps {
 
 const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose }) => {
   const axiosInstance = useAxios()
-  const router = useRouter()
   const [token, setToken] = useState("")
   const [formData, setFormData] = useState({
     namalengkap: "",
@@ -93,9 +92,11 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose }) => {
         } else {
           Swal.fire("Gagal menyimpan data!", "Coba lagi nanti.", "error")
         }
-      } catch (error: any) {
-        console.error("Error dari backend:", error.response?.data || error.message)
-        Swal.fire("Error", "Terjadi kesalahan: " + (error.response?.data?.msg || error.message), "error")
+      } catch (error) {
+        // Gunakan tipe AxiosError untuk menangani kesalahan
+        const axiosError = error as AxiosError
+        console.error("Error dari backend:", axiosError.response?.data || axiosError.message)
+        Swal.fire("Error", "Terjadi kesalahan: " + (axiosError.response?.data?.msg || axiosError.message), "error")
       }
     }
   }

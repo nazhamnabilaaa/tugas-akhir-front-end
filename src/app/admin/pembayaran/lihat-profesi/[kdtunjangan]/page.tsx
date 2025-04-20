@@ -78,9 +78,9 @@ interface listTunjanganPegawai {
 
 export default function Page() {
   //Tanggal Tunjangan
-  const [tanggalprofesiList, setTanggalprofesiList] = useState<TanggalProfesi[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [, setTanggalprofesiList] = useState<TanggalProfesi[]>([])
+  const [, setLoading] = useState(true)
+  const [, setError] = useState<string | null>(null)
   const params = useParams()
   const kdtunjangan = params.kdtunjangan ?? ""
   const [formData, setFormData] = useState({
@@ -118,12 +118,12 @@ export default function Page() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [listTunjangan, setListTunjangan] = useState<listTunjanganPegawai[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const itemsPerPage = 10
 
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
+  const [, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -151,7 +151,7 @@ export default function Page() {
         }
       }
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     console.log("params:", params) // Debugging params
@@ -194,7 +194,7 @@ export default function Page() {
     }
 
     GetTanggalProfesiByKDTunjangan()
-  }, [kdtunjangan, token, axiosInstance])
+  }, [kdtunjangan, token, axiosInstance, params])
 
   useEffect(() => {
     if (!token) return
@@ -218,7 +218,7 @@ export default function Page() {
     }
 
     getSatker()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -339,7 +339,7 @@ export default function Page() {
       }
     }
     getPegawai()
-  }, [token, axiosInstance, kdtunjangan])
+  }, [token, axiosInstance, kdtunjangan, router])
 
   useEffect(() => {
     if (!token) return
@@ -365,7 +365,7 @@ export default function Page() {
       }
     }
     getListTunjangan()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, kdtunjangan, router])
 
   // Handle individual checkbox change
   const handleCheckboxChange = (index) => {

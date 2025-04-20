@@ -2,17 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { GrAddCircle } from "react-icons/gr";
 import { TbTrash } from "react-icons/tb";
 import { FiEdit } from "react-icons/fi";
-import { Dialog } from "@/components/ui/dialog";
 import { FaRegFileAlt } from "react-icons/fa";
-import routes from "@/routes";
 import useAxios from "../../../useAxios";
 import { jwtDecode } from "jwt-decode";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter} from "next/navigation";
 import Swal from "sweetalert2";
-import Link from "next/link";
 
 const AdminNavbar = dynamic(() => import("@/components/navbar/AdminNavbar"), {
   ssr: false,
@@ -32,16 +28,12 @@ import Sidebar from "@/components/sidebar";
 export default function Page() {
   const [restoreDataList, setRestoreDataList] = useState<RestoreData[]>([]);
   const [filteredData, setFilteredData] = useState<RestoreData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const axiosInstance = useAxios();
   const router = useRouter();
   const [token, setToken] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [entries, setEntries] = useState(10);
   const [isClient, setIsClient] = useState(false);
-  const params = useParams();
-  const kdanak = params.kdanak ?? "";
   const [currentPage, setCurrentPage] = useState(1);
 
   const apiUrl = "http://localhost:8080";
@@ -51,10 +43,6 @@ export default function Page() {
       item.tahun.toString().includes(searchTerm)
     ).length / entries
   );
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
 
   const handleEditClick = (nip: string) => {
     router.push(`/admin/data-dosen/edit-pegawai?nip=${nip}`);
@@ -88,7 +76,7 @@ export default function Page() {
       console.error("Error decoding token:", err);
       router.push("/");
     }
-  }, [isClient]);
+  }, [isClient, router]);
 
   useEffect(() => {
     if (!token) return;
@@ -104,14 +92,11 @@ export default function Page() {
         console.error("Error fetching users:", error);
         localStorage.removeItem("accessToken");
         router.push("/");
-        setError("Gagal mengambil data Restore");
-      } finally {
-        setLoading(false);
       }
     };
 
     getRestore();
-  }, [token, axiosInstance]);
+  }, [token, axiosInstance, router]);
 
   useEffect(() => {
     const start = (currentPage - 1) * entries;
@@ -276,15 +261,6 @@ export default function Page() {
                 </button>
               </div>
             </div>
-           {/*} <div className="flex justify-end space-x-2 mt-6">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-4 py-2 bg-[#FFBD59] text-white rounded-md"
-              >
-                Kembali
-              </button>
-            </div>*/}
           </div>
         </section>
       </div>

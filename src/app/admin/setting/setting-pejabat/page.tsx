@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Navbar from "@/components/AdminNavbar";
 import Sidebar from "@/components/sidebar";
 import { GrAddCircle } from "react-icons/gr";
 import { TbTrash } from "react-icons/tb";
 import { FiEdit } from "react-icons/fi";
 import PejabatModal from "@/components/Pejabat";
-import AdminNavbar from "@/components/navbar/AdminNavbar";
-import routes from "@/routes";
+import AdminNavbar from "@/components/navbar/AdminNavbar"; // Pastikan ini digunakan jika diperlukan
 import useAxios from "../../../useAxios";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
@@ -32,13 +30,12 @@ export default function Page() {
   const [entries, setEntries] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // const [loading, setLoading] = useState(true); // Jika tidak digunakan, bisa dihapus
+  // const [error, setError] = useState<string | null>(null); // Jika tidak digunakan, bisa dihapus
 
   const axiosInstance = useAxios();
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [namalengkap, setNamalengkap] = useState("");
 
   const apiUrl = "http://localhost:8080";
 
@@ -57,7 +54,6 @@ export default function Page() {
             router.push("/");
           } else {
             setToken(accessToken);
-            setNamalengkap(decoded.namalengkap);
           }
         } catch (err) {
           console.error("Error decoding token:", err);
@@ -65,7 +61,7 @@ export default function Page() {
         }
       }
     }
-  }, []);
+  }, [router]); // Menambahkan 'router' ke array dependensi
 
   useEffect(() => {
     if (!token) return;
@@ -80,14 +76,14 @@ export default function Page() {
         console.error("Error fetching RUH PEJABAT:", error);
         localStorage.removeItem("accessToken");
         router.push("/");
-        setError("Gagal mengambil data R/U/H Pejabat");
+        setError("Gagal mengambil data R/U/H Pejabat"); // Jika tidak digunakan, bisa dihapus
       } finally {
-        setLoading(false);
+        setLoading(false); // Jika tidak digunakan, bisa dihapus
       }
     };
 
     getRUHPejabat();
-  }, [token, axiosInstance]);
+  }, [token, axiosInstance, router]); // Menambahkan 'router' ke array dependensi
 
   useEffect(() => {
     const filtered = pejabatList.filter(
@@ -154,14 +150,9 @@ export default function Page() {
     setIsModalOpen(false);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   return (
     <div className="flex flex-col">
-      <AdminNavbar />
-
+      <AdminNavbar /> {/* Pastikan digunakan jika diperlukan */}
       <div className="flex">
         <Sidebar />
         <section className="flex-1 text-black px-16">

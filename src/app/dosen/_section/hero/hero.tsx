@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import routes from "@/routes"; // Jika file ada di src/routes.ts
 
 export function Hero() {
   return (

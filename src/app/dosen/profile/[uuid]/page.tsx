@@ -4,11 +4,9 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/navbar/navbar";
 import Image from "next/image";
 import EditProfileModal from "@/components/EditProfileModal";
-import routes from "@/routes"; // Jika file ada di src/routes.ts
 import useAxios from "../../../useAxios";
 import { jwtDecode } from "jwt-decode";
 import {useParams, useRouter } from "next/navigation";
-import Swal from "sweetalert2";
 
 interface Users {
   uuid: string;
@@ -23,17 +21,17 @@ interface Users {
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [setLoading] = useState(true);
+  const [setError] = useState<string | null>(null);
   const axiosInstance = useAxios();
   const router = useRouter();
   const params = useParams();
   const uuid = params.uuid ?? ""; 
   const [token, setToken] = useState("");
-  const [UUID, setUUID] = useState("");
+  const [setUUID] = useState("");
   const apiUrl = "http://localhost:8080";
 
-  const [users, setUsers] = useState<Users[]>([]);
+  const [setUsers] = useState<Users[]>([]);
   const [formData, setFormData] = useState({
     uuid: "",
     username: "",

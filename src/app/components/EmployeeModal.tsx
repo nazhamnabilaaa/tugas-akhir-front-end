@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
 import Swal from "sweetalert2";
 import useAxios from "../useAxios";
 import { useRouter } from "next/navigation";
@@ -41,13 +40,6 @@ interface AnakSatkerData {
   nmanak: string;
   modul: string;
   kdsatker: string;
-}
-
-interface RestoreData {
-  kdanak: string;
-  KodeUpload: string;
-  bulan: string;
-  tahun: string;
 }
 
 interface EmployeeModalProps {
@@ -132,14 +124,12 @@ export default function EmployeeModal({
   }, [initialData, mode, isOpen]);
 
   const [konfigurasi, setKonfigurasi] = useState<AnakSatkerData[]>([]);
-  const [restore, setRestore] = useState<RestoreData[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const axiosInstance = useAxios();
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [namalengkap, setNamalengkap] = useState("");
 
   const apiUrl = "http://localhost:8080";
 
@@ -159,7 +149,6 @@ export default function EmployeeModal({
             router.push("/"); // Redirect ke login
           } else {
             setToken(accessToken);
-            setNamalengkap(decoded.namalengkap);
           }
         } catch (err) {
           console.error("Error decoding token:", err);
@@ -167,7 +156,7 @@ export default function EmployeeModal({
         }
       }
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!token) return;
@@ -178,10 +167,9 @@ export default function EmployeeModal({
           headers: { Authorization: `Bearer ${token}` },
         });
   
-        // Ambil hanya data yang bisa di-map
         setKonfigurasi(response.data.Data[0] || []);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching cabangsatker:", error);
         localStorage.removeItem("accessToken");
         router.push("/");
         setError("Gagal mengambil data Satuan Kerja Fakultas");
@@ -191,41 +179,12 @@ export default function EmployeeModal({
     };
   
     getCabangsatker();
-  }, [token, axiosInstance]);
-
-  useEffect(() => {
-    if (!token) return;
-  
-    const getRestore = async () => {
-      try {
-        const response = await axiosInstance.get(`${apiUrl}/upload-excel`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-  
-        // Ambil hanya data yang bisa di-map
-        setRestore(response.data.Data[0] || []);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        localStorage.removeItem("accessToken");
-        router.push("/");
-        setError("Gagal mengambil data REstore");
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    getRestore();
-  }, [token, axiosInstance]);
-
-
-
+  }, [token, axiosInstance, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
-  
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -277,7 +236,7 @@ export default function EmployeeModal({
       } else {
         Swal.fire("Gagal!", "Gagal menyimpan data, coba lagi nanti.", "error");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error:", error.response?.data || error.message);
       Swal.fire("Error", error.response?.data?.msg || "Terjadi kesalahan saat menyimpan data.", "error");
     }
@@ -286,74 +245,72 @@ export default function EmployeeModal({
   if (!isOpen) return null;
 
   return (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-lg max-w-[800px] min-w-[700px] w-full max-h-[90vh] overflow-y-auto z-50">
-      <h2 className="text-2xl font-bold mb-4">
-        {mode === "add" ? "Tambah" : "Edit"} Data Pegawai
-      </h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
-        {Object.keys(formData).map((key) => (
-          <div key={key}>
-            <label
-              htmlFor={key}
-              className="block text-sm font-medium mb-1 capitalize"
-            >
-              {labelMap[key as keyof Employee] || key.replace(/_/g, " ")}
-            </label>
-
-            {/* Kondisi khusus untuk dropdown kdanak */}
-            {key === "kdanak" ? (
-              <select
-                id={key}
-                name={key}
-                value={formData.kdanak}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg max-w-[800px] min-w-[700px] w-full max-h-[90vh] overflow-y-auto z-50">
+        <h2 className="text-2xl font-bold mb-4">
+          {mode === "add" ? "Tambah" : "Edit"} Data Pegawai
+        </h2>
+        <form onSubmit={handleSubmit} className="grid grid-cols-3 gap-4">
+          {Object.keys(formData).map((key) => (
+            <div key={key}>
+              <label
+                htmlFor={key}
+                className="block text-sm font-medium mb-1 capitalize"
               >
-                <option value="">Pilih Kode Anak</option>
-                {loading ? (
-                  <option disabled>Loading...</option>
-                ) : error ? (
-                  <option disabled>Error: {error}</option>
-                ) : (
-                  konfigurasi.map((item) => (
-                    <option key={item.kdanak} value={item.kdanak}>
-                      {item.kdanak} - {item.nmanak}
-                    </option>
-                  ))
-                )}
-              </select>
-            ) : (
-              <input
-                type="text"
-                id={key}
-                name={key}
-                value={formData[key as keyof Employee]}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            )}
-          </div>
-        ))}
+                {labelMap[key as keyof Employee] || key.replace(/_/g, " ")}
+              </label>
 
-        {/* Tombol Aksi */}
-        <div className="col-span-3 flex justify-end space-x-2 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-[#FFBD59] text-white rounded-md hover:bg-gray-300"
-          >
-            Kembali
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-[#18439D] text-white rounded-md hover:bg-blue-600"
-          >
-            Simpan
-          </button>
-        </div>
-      </form>
+              {key === "kdanak" ? (
+                <select
+                  id={key}
+                  name={key}
+                  value={formData.kdanak}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Pilih Kode Anak</option>
+                  {loading ? (
+                    <option disabled>Loading...</option>
+                  ) : error ? (
+                    <option disabled>Error: {error}</option>
+                  ) : (
+                    konfigurasi.map((item) => (
+                      <option key={item.kdanak} value={item.kdanak}>
+                        {item.kdanak} - {item.nmanak}
+                      </option>
+                    ))
+                  )}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  id={key}
+                  name={key}
+                  value={formData[key as keyof Employee]}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              )}
+            </div>
+          ))}
+
+          <div className="col-span-3 flex justify-end space-x-2 mt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-[#FFBD59] text-white rounded-md hover:bg-gray-300"
+            >
+              Kembali
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-[#18439D] text-white rounded-md hover:bg-blue-600"
+            >
+              Simpan
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-);
+  );
 }

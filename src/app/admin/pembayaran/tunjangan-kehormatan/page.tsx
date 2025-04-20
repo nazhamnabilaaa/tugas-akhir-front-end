@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import Navbar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar";
 import { GrAddCircle } from "react-icons/gr";
 import { TbTrash } from "react-icons/tb";
@@ -29,8 +28,6 @@ interface TanggalKehormatan {
 
 export default function Page() {
   const [tanggalkehormatanList, setTanggalkehormatanList] = useState<TanggalKehormatan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [entries, setEntries] = useState(10);
   const [token, setToken] = useState("");
@@ -46,57 +43,6 @@ export default function Page() {
 
   const totalPages = Math.ceil(filteredData.length / entries);
   const paginatedData = filteredData.slice((currentPage - 1) * entries, currentPage * entries);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const accessToken = localStorage.getItem("accessToken");
-      if (!accessToken) {
-        router.push("/");
-      } else {
-        try {
-          const decoded = jwtDecode(accessToken);
-          const currentTime = Math.floor(Date.now() / 1000);
-          if (decoded.exp && decoded.exp < currentTime) {
-            localStorage.removeItem("accessToken");
-            router.push("/");
-          } else {
-            setToken(accessToken);
-          }
-        } catch (err) {
-          console.error("Error decoding token:", err);
-          router.push("/");
-        }
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!token) return;
-
-    const gettanggalKehormatan = async () => {
-      try {
-        const response = await axiosInstance.get(`${apiUrl}/tanggalkehormatan`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setTanggalkehormatanList(response.data.Data[0] || []);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        localStorage.removeItem("accessToken");
-        router.push("/");
-        setError("Gagal mengambil data Tanggal Kehormatan");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    gettanggalKehormatan();
-  }, [token]);
 
   const handleDelete = async (kdtunjangan: string) => {
     Swal.fire({
@@ -123,6 +69,48 @@ export default function Page() {
       }
     });
   };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const accessToken = localStorage.getItem("accessToken");
+      if (!accessToken) {
+        router.push("/");
+      } else {
+        try {
+          const decoded = jwtDecode(accessToken);
+          const currentTime = Math.floor(Date.now() / 1000);
+          if (decoded.exp && decoded.exp < currentTime) {
+            localStorage.removeItem("accessToken");
+            router.push("/");
+          } else {
+            setToken(accessToken);
+          }
+        } catch (err) {
+          console.error("Error decoding token:", err);
+          router.push("/");
+        }
+      }
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const gettanggalKehormatan = async () => {
+      try {
+        const response = await axiosInstance.get(`${apiUrl}/tanggalkehormatan`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTanggalkehormatanList(response.data.Data[0] || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        localStorage.removeItem("accessToken");
+        router.push("/");
+      }
+    };
+
+    gettanggalKehormatan();
+  }, [token, axiosInstance, router]);
 
   return (
     <div className="flex flex-col">

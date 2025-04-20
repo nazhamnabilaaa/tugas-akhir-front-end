@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Menu, X, ChevronDown, Settings, LogOut } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut } from "lucide-react"; // Removed Settings import
 import useAxios from "../../useAxios";
-import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 

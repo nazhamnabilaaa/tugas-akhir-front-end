@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import useAxios from "../useAxios";
 import { useRouter } from "next/navigation";
+// import { AxiosError } from "axios"; // Import AxiosError
 
 interface KonfigurasiSatkerData {
   kdsatker: string;
@@ -49,7 +50,6 @@ const AddKonfigurasiModal: React.FC<AddKonfigurasiModalProps> = ({
   const [formData, setFormData] = useState<KonfigurasiSatkerData>(defaultFormData);
   const axiosInstance = useAxios();
   const router = useRouter();
-  const [token, setToken] = useState("");
 
   const apiUrl = "http://localhost:8080";
 
@@ -87,8 +87,6 @@ const AddKonfigurasiModal: React.FC<AddKonfigurasiModalProps> = ({
     try {
       const token = localStorage.getItem("token") || "";
       let response;
-
-      
 
       if (isUpdate) {
         if (!initialData?.kdsatker) {
@@ -131,7 +129,7 @@ const AddKonfigurasiModal: React.FC<AddKonfigurasiModalProps> = ({
       } else {
         Swal.fire("Gagal!", "Gagal menyimpan data, coba lagi nanti.", "error");
       }
-    } catch (error: any) {
+    } catch (error: AxiosError) { // Menambahkan tipe AxiosError
       console.error("Error:", error.response?.data || error.message);
 
       if (error.response?.status === 400 && error.response?.data?.msg?.includes("duplicate")) {
@@ -141,8 +139,6 @@ const AddKonfigurasiModal: React.FC<AddKonfigurasiModalProps> = ({
       }
     }
   };
-
-
 
   if (!isOpen) return null;
 

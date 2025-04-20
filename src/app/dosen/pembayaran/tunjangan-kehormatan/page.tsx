@@ -1,91 +1,83 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Navbar from "@/components/navbar/navbar"
-import { GrAddCircle } from "react-icons/gr"
-import { TbTrash } from "react-icons/tb"
-import Link from "next/link"
-import { MdPayment } from "react-icons/md"
-import useAxios from "../../../useAxios"
-import { jwtDecode } from "jwt-decode"
-import { useRouter } from "next/navigation"
-import Swal from "sweetalert2"
+import { useState, useEffect } from "react";
+import Navbar from "@/components/navbar/navbar";
+import { GrAddCircle } from "react-icons/gr";
+import { TbTrash } from "react-icons/tb";
+import Link from "next/link";
+import { MdPayment } from "react-icons/md";
+import useAxios from "../../../useAxios";
+import { jwtDecode } from "jwt-decode";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 interface TanggalKehormatan {
-  kdanak: string
-  kdtunjangan: string
-  bulan: string
-  tahun: string
-  keterangan: string
-  tanggal: string
+  kdanak: string;
+  kdtunjangan: string;
+  bulan: string;
+  tahun: string;
+  keterangan: string;
+  tanggal: string;
 }
 
 export default function Page() {
-  const [tanggalkehormatanList, setTanggalkehormatanList] = useState<TanggalKehormatan[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [filteredData, setFilteredData] = useState<TanggalKehormatan[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [entries, setEntries] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [tanggalkehormatanList, setTanggalkehormatanList] = useState<TanggalKehormatan[]>([]);
+  const [filteredData, setFilteredData] = useState<TanggalKehormatan[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [entries, setEntries] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const axiosInstance = useAxios()
-  const router = useRouter()
-  const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
+  const axiosInstance = useAxios();
+  const router = useRouter();
+  const [token, setToken] = useState("");
 
-  const apiUrl = "http://localhost:8080"
+  const apiUrl = "http://localhost:8080";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const accessToken = localStorage.getItem("accessToken")
+      const accessToken = localStorage.getItem("accessToken");
       if (!accessToken) {
-        router.push("/")
+        router.push("/");
       } else {
         try {
-          const decoded = jwtDecode<{ exp: number; namalengkap: string }>(accessToken)
-          const currentTime = Math.floor(Date.now() / 1000)
+          const decoded = jwtDecode<{ exp: number }>(accessToken);
+          const currentTime = Math.floor(Date.now() / 1000);
 
           if (decoded.exp && decoded.exp < currentTime) {
-            console.warn("Token expired")
-            localStorage.removeItem("accessToken") // Hapus token expired
-            router.push("/") // Redirect ke login
+            console.warn("Token expired");
+            localStorage.removeItem("accessToken"); // Hapus token expired
+            router.push("/"); // Redirect ke login
           } else {
-            setToken(accessToken)
-            setNamalengkap(decoded.namalengkap)
+            setToken(accessToken);
           }
         } catch (err) {
-          console.error("Error decoding token:", err)
-          router.push("/")
+          console.error("Error decoding token:", err);
+          router.push("/");
         }
       }
     }
-  }, [])
+  }, [router]);
 
   useEffect(() => {
-    if (!token) return
+    if (!token) return;
 
     const gettanggalKehormatan = async () => {
       try {
         const response = await axiosInstance.get(`${apiUrl}/tanggalkehormatan`, {
           headers: { Authorization: `Bearer ${token}` },
-        })
+        });
 
-        // Ambil hanya data yang bisa di-map
-        setTanggalkehormatanList(response.data.Data[0] || [])
+        setTanggalkehormatanList(response.data.Data[0] || []);
       } catch (error) {
-        console.error("Error fetching users:", error)
-        localStorage.removeItem("accessToken")
-        router.push("/")
-        setError("Gagal mengambil data Tanggal Kehormatan")
-      } finally {
-        setLoading(false)
+        console.error("Error fetching users:", error);
+        localStorage.removeItem("accessToken");
+        router.push("/");
       }
-    }
+    };
 
-    gettanggalKehormatan()
-  }, [token, axiosInstance])
+    gettanggalKehormatan();
+  }, [token, axiosInstance, router]);
 
   const handleDelete = async (kdtunjangan: string) => {
     Swal.fire({
@@ -102,41 +94,38 @@ export default function Page() {
         try {
           await axiosInstance.delete(`${apiUrl}/tanggalkehormatan/${kdtunjangan}`, {
             headers: { Authorization: `Bearer ${token}` },
-          })
+          });
 
-          setTanggalkehormatanList(tanggalkehormatanList.filter((item) => item.kdtunjangan !== kdtunjangan))
+          setTanggalkehormatanList(tanggalkehormatanList.filter((item) => item.kdtunjangan !== kdtunjangan));
 
-          Swal.fire("Dihapus!", "Data berhasil dihapus.", "success")
+          Swal.fire("Dihapus!", "Data berhasil dihapus.", "success");
         } catch (error) {
-          console.error("Error deleting data:", error)
-          Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data.", "error")
+          console.error("Error deleting data:", error);
+          Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data.", "error");
         }
       }
-    })
-  }
+    });
+  };
 
   useEffect(() => {
-    if (!tanggalkehormatanList.length) return
+    if (!tanggalkehormatanList.length) return;
 
     const filtered = tanggalkehormatanList.filter(
-      (item) => item.kdtunjangan.includes(searchTerm) || item.kdanak.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+      (item) =>
+        item.kdtunjangan.includes(searchTerm) || item.kdanak.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     // Calculate start and end indices for current page
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
 
-    setFilteredData(filtered.slice(startIndex, endIndex))
-  }, [searchTerm, currentPage, itemsPerPage, tanggalkehormatanList])
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-  }
+    setFilteredData(filtered.slice(startIndex, endIndex));
+  }, [searchTerm, currentPage, itemsPerPage, tanggalkehormatanList]);
 
   const totalItems = tanggalkehormatanList.filter(
-    (item) => item.kdtunjangan.includes(searchTerm) || item.kdanak.toLowerCase().includes(searchTerm.toLowerCase()),
-  ).length
-  const totalPages = Math.ceil(totalItems / itemsPerPage)
+    (item) => item.kdtunjangan.includes(searchTerm) || item.kdanak.toLowerCase().includes(searchTerm.toLowerCase())
+  ).length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
     <section className="text-black px-4 md:px-16">
@@ -155,10 +144,10 @@ export default function Page() {
               className="border rounded p-2 w-32"
               value={entries}
               onChange={(e) => {
-                const value = Number(e.target.value)
-                setEntries(value)
-                setItemsPerPage(value)
-                setCurrentPage(1) // Reset to first page when changing items per page
+                const value = Number(e.target.value);
+                setEntries(value);
+                setItemsPerPage(value);
+                setCurrentPage(1); // Reset to first page when changing items per page
               }}
             >
               <option value="10">10</option>
@@ -237,30 +226,30 @@ export default function Page() {
         </div>
 
         <div className="flex justify-end mt-4">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
-                >
-                  ‹
-                </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+            >
+              ‹
+            </button>
 
-                {/* Single page number button */}
-                <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
-                  {currentPage}
-                </span>
+            {/* Single page number button */}
+            <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
+              {currentPage}
+            </span>
 
-                <button
-                  onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
-                >
-                  ›
-                </button>
-              </div>
-            </div>
+            <button
+              onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+            >
+              ›
+            </button>
+          </div>
+        </div>
       </div>
     </section>
-  )
+  );
 }

@@ -12,7 +12,6 @@ import { jwtDecode } from "jwt-decode"
 import { useRouter } from "next/navigation"
 import Swal from "sweetalert2"
 
-// Gunakan dynamic import untuk AdminNavbar untuk menghindari error hydration
 const AdminNavbar = dynamic(() => import("@/components/navbar/AdminNavbar"), {
   ssr: false,
   loading: () => <div>Loading Navbar...</div>,
@@ -29,7 +28,6 @@ export default function Page() {
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -40,16 +38,15 @@ export default function Page() {
         router.push("/")
       } else {
         try {
-          const decoded = jwtDecode<{ exp: number; namalengkap: string }>(accessToken)
+          const decoded = jwtDecode<{ exp: number }>(accessToken)
           const currentTime = Math.floor(Date.now() / 1000)
 
           if (decoded.exp && decoded.exp < currentTime) {
             console.warn("Token expired")
-            localStorage.removeItem("accessToken") // Hapus token expired
-            router.push("/") // Redirect ke login
+            localStorage.removeItem("accessToken")
+            router.push("/")
           } else {
             setToken(accessToken)
-            setNamalengkap(decoded.namalengkap)
           }
         } catch (err) {
           console.error("Error decoding token:", err)
@@ -57,7 +54,7 @@ export default function Page() {
         }
       }
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (!token) return
@@ -72,7 +69,7 @@ export default function Page() {
         setUsers(response.data.Data[0] || [])
       } catch (error) {
         console.error("Error fetching users:", error)
-        localStorage.removeItem("accessToken") // Hapus token yang expired
+        localStorage.removeItem("accessToken")
         router.push("/")
         setError("Gagal mengambil data pengguna")
       } finally {
@@ -81,12 +78,12 @@ export default function Page() {
     }
 
     getUser()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, router])
 
   const handleSaveUser = (userData: Omit<User, "uuid">) => {
     const newUser = {
       ...userData,
-      uuid: Date.now().toString(), // Gunakan timestamp agar ID unik
+      uuid: Date.now().toString(),
     }
     setUsers([...users, newUser])
   }
@@ -106,14 +103,12 @@ export default function Page() {
 
       if (!result.isConfirmed) return
 
-      // Mengirim permintaan DELETE ke API
       await axiosInstance.delete(`${apiUrl}/users/${uuid}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
       Swal.fire("Berhasil!", "Data berhasil dihapus.", "success")
 
-      // Perbarui state untuk menghapus data dari daftar
       setUsers((prevUsers) => prevUsers.filter((item) => item.uuid !== uuid))
     } catch (error) {
       console.error("Error deleting data:", error)
@@ -130,11 +125,6 @@ export default function Page() {
     : []
 
   const totalPages = Math.ceil(filteredUsers.length / entriesPerPage)
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-  }
-
   const displayedUsers = filteredUsers.slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage)
 
   if (loading) return <div>Loading...</div>
@@ -142,20 +132,16 @@ export default function Page() {
 
   return (
     <div className="flex flex-col">
-      {/* Navbar */}
       <AdminNavbar />
 
       <div className="flex">
-        {/* Sidebar */}
         <Sidebar />
 
-        {/* Main Content */}
         <section className="flex-1 text-black px-16">
           <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-4">
             <h2 className="text-2xl font-bold">Dashboard</h2>
           </div>
 
-          {/* User Management Section */}
           <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Kelola Akun Pengguna</h2>
@@ -163,16 +149,14 @@ export default function Page() {
 
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-2">
-                <label htmlFor="tampilan" className="mr-2">
-                  Tampilan
-                </label>
+                <label htmlFor="tampilan" className="mr-2">Tampilan</label>
                 <select
                   id="tampilan"
                   className="border rounded p-2 w-32"
                   value={entriesPerPage}
                   onChange={(e) => {
                     setEntriesPerPage(Number(e.target.value))
-                    setCurrentPage(1) // Reset to first page when changing entries per page
+                    setCurrentPage(1)
                   }}
                 >
                   <option value="10">10</option>
@@ -201,7 +185,6 @@ export default function Page() {
 
             <UserTable users={displayedUsers} onDelete={handleDelete} />
 
-            {/* Pagination */}
             <div className="flex justify-end mt-4">
               <div className="flex space-x-2">
                 <button
@@ -211,12 +194,9 @@ export default function Page() {
                 >
                   ‹
                 </button>
-
-                {/* Single page number button */}
                 <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
                   {currentPage}
                 </span>
-
                 <button
                   onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
@@ -228,7 +208,6 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Add User Modal */}
           <AddUserModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveUser} />
         </section>
       </div>

@@ -99,7 +99,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({
               <input
                 type="text"
                 name={key}
-                value={(formData as any)[key]}
+                value={formData[key as keyof Employee]} // Fixed type error here
                 onChange={handleInputChange}
                 className="w-full p-2 border rounded"
               />

@@ -2,12 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import Navbar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar";
 import { GrAddCircle } from "react-icons/gr";
 import { TbTrash } from "react-icons/tb";
-import { FiEdit } from "react-icons/fi";
-import { IoEyeOutline } from "react-icons/io5";
 import Link from "next/link";
 import { MdPayment } from "react-icons/md";
 import useAxios from "../../../useAxios";
@@ -31,9 +28,6 @@ interface TanggalProfesi {
 
 export default function Page() {
   const [tanggalProfesi, setTanggalProfesi] = useState<TanggalProfesi[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filteredData, setFilteredData] = useState<TanggalProfesi[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [entries, setEntries] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,7 +35,6 @@ export default function Page() {
   const axiosInstance = useAxios();
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [namalengkap, setNamalengkap] = useState("");
 
   const apiUrl = "http://localhost:8080";
 
@@ -59,14 +52,13 @@ export default function Page() {
             router.push("/");
           } else {
             setToken(accessToken);
-            setNamalengkap(decoded.namalengkap);
           }
-        } catch (err) {
+        } catch {
           router.push("/");
         }
       }
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!token) return;
@@ -77,17 +69,14 @@ export default function Page() {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTanggalProfesi(response.data.Data[0] || []);
-      } catch (error) {
+      } catch {
         localStorage.removeItem("accessToken");
         router.push("/");
-        setError("Gagal mengambil data Tanggal Tunjangan Profesi");
-      } finally {
-        setLoading(false);
       }
     };
 
     getTanggalprofesi();
-  }, [token, axiosInstance]);
+  }, [token, axiosInstance, router]);
 
   const handleDelete = async (kdtunjangan: string) => {
     Swal.fire({
@@ -109,32 +98,23 @@ export default function Page() {
             prev.filter((item) => item.kdtunjangan !== kdtunjangan)
           );
           Swal.fire("Dihapus!", "Data berhasil dihapus.", "success");
-        } catch (error) {
+        } catch {
           Swal.fire("Gagal!", "Terjadi kesalahan saat menghapus data.", "error");
         }
       }
     });
   };
 
-  const totalPages = Math.ceil(
-    tanggalProfesi.filter((item) =>
-      item.kdtunjangan.includes(searchTerm) ||
-      item.kdanak.toLowerCase().includes(searchTerm.toLowerCase())
-    ).length / entries
+  const filteredData = tanggalProfesi.filter((item) =>
+    item.kdtunjangan.includes(searchTerm) ||
+    item.kdanak.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  useEffect(() => {
-    const filtered = tanggalProfesi.filter((item) =>
-      item.kdtunjangan.includes(searchTerm) ||
-      item.kdanak.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const startIndex = (currentPage - 1) * entries;
-    setFilteredData(filtered.slice(startIndex, startIndex + entries));
-  }, [searchTerm, entries, tanggalProfesi, currentPage]);
+  const totalPages = Math.ceil(filteredData.length / entries);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * entries,
+    currentPage * entries
+  );
 
   return (
     <div className="flex flex-col">
@@ -215,8 +195,8 @@ export default function Page() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.length > 0 ? (
-                  filteredData.map((item, index) => (
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item, index) => (
                     <tr key={index} className="border">
                       <td className="px-6 border border-gray-300 py-4 text-center">
                         {item.kdanak}
@@ -277,7 +257,6 @@ export default function Page() {
                   ‹
                 </button>
 
-                {/* Single page number button */}
                 <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
                   {currentPage}
                 </span>

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
 import Swal from "sweetalert2";
 import useAxios from "../useAxios";
 import { useRouter } from "next/navigation";
@@ -53,36 +52,21 @@ const Pejabat: React.FC<PejabatModalProps> = ({
     jurubayar: "",
   };
 
-
-  useEffect(() => {
-    if (editData && mode === "edit") {
-      setFormData(editData);
-    } else {
-      setFormData({
-        kdanak: "",
-        nip: "",
-        nik: "",
-        nmpeg: "",
-        nmjab: "",
-        kdjab: "",
-        kdduduk: "",
-        nmduduk: "",
-        jurubayar: "",
-      });
-    }
-  }, [editData, mode, isOpen]);
-
   const [konfigurasi, setKonfigurasi] = useState<AnakSatkerData[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<PejabatData>(defaultFormData);
   const axiosInstance = useAxios();
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [namalengkap, setNamalengkap] = useState("");
-
-  const apiUrl = "http://localhost:8080";
+  
+  useEffect(() => {
+    if (editData && mode === "edit") {
+      setFormData(editData);
+    } else {
+      setFormData(defaultFormData);
+    }
+  }, [editData, mode, isOpen]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -93,14 +77,13 @@ const Pejabat: React.FC<PejabatModalProps> = ({
         try {
           const decoded = jwtDecode(accessToken);
           const currentTime = Math.floor(Date.now() / 1000);
-  
+
           if (decoded.exp && decoded.exp < currentTime) {
             console.warn("Token expired");
             localStorage.removeItem("accessToken"); // Hapus token expired
             router.push("/"); // Redirect ke login
           } else {
             setToken(accessToken);
-            setNamalengkap(decoded.namalengkap);
           }
         } catch (err) {
           console.error("Error decoding token:", err);
@@ -108,18 +91,17 @@ const Pejabat: React.FC<PejabatModalProps> = ({
         }
       }
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!token) return;
-  
+
     const getSatker = async () => {
       try {
-        const response = await axiosInstance.get(`${apiUrl}/cabangsatker`, {
+        const response = await axiosInstance.get("http://localhost:8080/cabangsatker", {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
-        // Ambil hanya data yang bisa di-map
+
         setKonfigurasi(response.data.Data[0] || []);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -130,10 +112,9 @@ const Pejabat: React.FC<PejabatModalProps> = ({
         setLoading(false);
       }
     };
-  
-    getSatker();
-  }, [token, axiosInstance]);
 
+    getSatker();
+  }, [token, axiosInstance, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -162,14 +143,14 @@ const Pejabat: React.FC<PejabatModalProps> = ({
       let response;
 
       if (isUpdate && editData?.nip) {
-        response = await axiosInstance.patch(`${apiUrl}/ruhpejabat/${editData.nip}`, formData, {
+        response = await axiosInstance.patch(`http://localhost:8080/ruhpejabat/${editData.nip}`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
       } else {
-        response = await axiosInstance.post(`${apiUrl}/ruhpejabat`, formData, {
+        response = await axiosInstance.post("http://localhost:8080/ruhpejabat", formData, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -184,7 +165,7 @@ const Pejabat: React.FC<PejabatModalProps> = ({
       } else {
         Swal.fire("Gagal!", "Gagal menyimpan data, coba lagi nanti.", "error");
       }
-    } catch (error: any) {
+    } catch (error: AxiosError) {
       console.error("Error:", error.response?.data || error.message);
       Swal.fire("Error", error.response?.data?.msg || "Terjadi kesalahan saat menyimpan data.", "error");
     }
@@ -199,7 +180,6 @@ const Pejabat: React.FC<PejabatModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
             {/* Kode Anak */}
             <div>
               <label className="block text-sm font-medium mb-2">Kode Anak</label>
@@ -309,34 +289,21 @@ const Pejabat: React.FC<PejabatModalProps> = ({
                 required
               />
             </div>
-
-            {/* Juru Bayar (TNI) */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Juru Bayar (TNI)</label>
-              <input
-                type="text"
-                value={formData.jurubayar}
-                onChange={(e) => setFormData({ ...formData, jurubayar: e.target.value })}
-                className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
           </div>
 
-          {/* Tombol Aksi */}
-          <div className="flex justify-end gap-4 mt-8">
+          <div className="flex justify-end mt-6 space-x-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2.5 bg-[#FFB84C] text-white rounded hover:bg-[#FFA82C] transition-colors font-medium"
+              className="px-6 py-2 bg-gray-400 text-white rounded"
             >
-              Kembali
+              Batal
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-[#0066CC] text-white rounded hover:bg-blue-700 transition-colors font-medium"
+              className="px-6 py-2 bg-blue-500 text-white rounded"
             >
-              Simpan
+              {mode === "edit" ? "Update" : "Simpan"}
             </button>
           </div>
         </form>

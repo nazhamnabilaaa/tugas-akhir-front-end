@@ -2,22 +2,17 @@
 
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Navbar from "@/components/navbar/navbar";
 import Sidebar from "@/components/sidebar";
-import Link from "next/link";
-import routes from "@/routes"; // Pastikan path ini benar
 import useAxios from "../../../useAxios";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-
 
 // Dynamic import for AdminNavbar to match the one in the other file
 const AdminNavbar = dynamic(() => import("@/components/navbar/AdminNavbar"), {
   ssr: false,
   loading: () => <div>Loading Navbar...</div>,
 });
-
 
 interface AnakSatkerData {
   kdanak: string;
@@ -31,17 +26,14 @@ export default function Page() {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [konfigurasi, setKonfigurasi] = useState<AnakSatkerData[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [namalengkap, setNamalengkap] = useState("");
-    const [formData, setFormData] = useState({
-      kdanak: "",
-      kdtunjangan: "",
-      bulan: "",
-      tahun: new Date().getFullYear(),
-      keterangan: "",
-      tanggal: "",
-    });
+  const [formData, setFormData] = useState({
+    kdanak: "",
+    kdtunjangan: "",
+    bulan: "",
+    tahun: new Date().getFullYear(),
+    keterangan: "",
+    tanggal: "",
+  });
 
   const apiUrl = "http://localhost:8080";
 
@@ -49,7 +41,6 @@ export default function Page() {
     const storedToken = localStorage.getItem("token");
     if (storedToken) setToken(storedToken);
   }, []);
-
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -60,14 +51,13 @@ export default function Page() {
         try {
           const decoded = jwtDecode(accessToken);
           const currentTime = Math.floor(Date.now() / 1000);
-  
+
           if (decoded.exp && decoded.exp < currentTime) {
             console.warn("Token expired");
-            localStorage.removeItem("accessToken"); // Hapus token expired
-            router.push("/"); // Redirect ke login
+            localStorage.removeItem("accessToken");
+            router.push("/");
           } else {
             setToken(accessToken);
-            setNamalengkap(decoded.namalengkap);
           }
         } catch (err) {
           console.error("Error decoding token:", err);
@@ -75,40 +65,35 @@ export default function Page() {
         }
       }
     }
-  }, []);
+  }, [router]); // Added router to the dependencies
 
   useEffect(() => {
     if (!token) return;
-  
+
     const getSatker = async () => {
       try {
         const response = await axiosInstance.get(`${apiUrl}/cabangsatker`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
-        // Ambil hanya data yang bisa di-map
+
         setKonfigurasi(response.data.Data[0] || []);
       } catch (error) {
         console.error("Error fetching users:", error);
         localStorage.removeItem("accessToken");
         router.push("/");
-        setError("Gagal mengambil data Satuan Kerja Fakultas");
-      } finally {
-        setLoading(false);
       }
     };
-  
+
     getSatker();
-  }, [token, axiosInstance]);
+  }, [token, axiosInstance, router]); // Added router to the dependencies
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value, // Update nilai sesuai dengan name input
+      [name]: value,
     }));
   };
-  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,8 +110,7 @@ export default function Page() {
     });
 
     if (!confirmation.isConfirmed) return;
-  
-    // Pastikan semua field terisi
+
     if (
       !formData.kdtunjangan ||
       !formData.bulan ||
@@ -138,7 +122,7 @@ export default function Page() {
       Swal.fire("Error", "Harap lengkapi semua Form!", "error");
       return;
     }
-  
+
     try {
       const data = {
         kdtunjangan: formData.kdtunjangan,
@@ -148,11 +132,11 @@ export default function Page() {
         tanggal: formData.tanggal,
         kdanak: formData.kdanak,
       };
-  
+
       const response = await axiosInstance.post(`${apiUrl}/tanggalkehormatan`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       if (response.status === 201) {
         Swal.fire("Data berhasil disimpan!", "", "success");
         router.push("/admin/pembayaran/tunjangan-kehormatan");
@@ -165,8 +149,6 @@ export default function Page() {
     }
   };
 
-
-
   return (
     <div className="flex flex-col">
       <AdminNavbar />
@@ -177,20 +159,24 @@ export default function Page() {
             <h2 className="text-2xl font-bold mb-4">TAMBAH TUNJANGAN KEHORMATAN</h2>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
-
-
-              {/* Kode Anak */}
               <div>
                 <label className="text-gray-700 font-medium">Kode Anak</label>
-                <select name="kdanak" className="border rounded-lg p-2 w-full bg-gray-100" value={formData.kdanak} onChange={handleChange} required>
+                <select
+                  name="kdanak"
+                  className="border rounded-lg p-2 w-full bg-gray-100"
+                  value={formData.kdanak}
+                  onChange={handleChange}
+                  required
+                >
                   <option value="">Pilih Kode Anak</option>
                   {konfigurasi.map((item) => (
-                    <option key={item.kdanak} value={item.kdanak}>{item.kdanak} - {item.nmanak}</option>
+                    <option key={item.kdanak} value={item.kdanak}>
+                      {item.kdanak} - {item.nmanak}
+                    </option>
                   ))}
                 </select>
               </div>
 
-              {/* Kode Tunjangan */}
               <div className="flex items-center space-x-2">
                 <label className="text-gray-700 font-medium w-32">Kode Tunjangan</label>
                 <input
@@ -198,19 +184,18 @@ export default function Page() {
                   className="border rounded-lg p-2 w-24 bg-gray-100"
                   name="kdtunjangan"
                   value={formData.kdtunjangan}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
 
-               {/* Bulan */}
-               <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
                 <label className="text-gray-700 font-medium w-32">Bulan (1-12)</label>
                 <select
                   className="border rounded-lg p-2 w-100 bg-gray-100"
                   name="bulan"
                   value={formData.bulan}
-                  onChange={handleChange} // Pastikan ada perubahan nilai
+                  onChange={handleChange}
                   required
                 >
                   <option value="">Pilih Bulan</option>
@@ -222,7 +207,6 @@ export default function Page() {
                 </select>
               </div>
 
-               {/* Tahun */}
               <div className="flex items-center space-x-2">
                 <label className="text-gray-700 font-medium w-32">Tahun</label>
                 <select
@@ -241,7 +225,6 @@ export default function Page() {
                 </select>
               </div>
 
-              {/* Tanggal */}
               <div className="flex items-center space-x-2">
                 <label className="text-gray-700 font-medium w-32">Tanggal</label>
                 <input
@@ -254,7 +237,6 @@ export default function Page() {
                 />
               </div>
 
-              {/* Keterangan */}
               <div className="flex items-start space-x-2">
                 <label className="text-gray-700 font-medium w-32">Keterangan</label>
                 <textarea
@@ -266,7 +248,6 @@ export default function Page() {
                 ></textarea>
               </div>
 
-              {/* Tombol Simpan */}
               <div className="flex justify-end">
                 <button type="submit" className="w-30 h-10 bg-[#004AAD] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer mt-4">
                   Simpan

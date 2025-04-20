@@ -22,7 +22,6 @@ export default function Page() {
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [entries, setEntries] = useState(10)
   const [isClient, setIsClient] = useState(false)
@@ -48,7 +47,7 @@ export default function Page() {
     }
 
     try {
-      const decoded = jwtDecode<{ exp: number; namalengkap: string }>(accessToken)
+      const decoded = jwtDecode<{ exp: number }>(accessToken)
       const currentTime = Math.floor(Date.now() / 1000)
 
       if (decoded.exp < currentTime) {
@@ -61,7 +60,7 @@ export default function Page() {
       console.error("Error decoding token:", err)
       router.push("/")
     }
-  }, [isClient])
+  }, [isClient, router])
 
   useEffect(() => {
     if (!token) return
@@ -73,7 +72,6 @@ export default function Page() {
         })
 
         const filteredData = response.data.Data[0]?.filter((item: AnakSatker) => item.kdsatker === kdsatker) || []
-
         setAnakSatkerList(filteredData)
       } catch (error) {
         console.error("Error fetching users:", error)
@@ -86,7 +84,7 @@ export default function Page() {
     }
 
     getAnakSatker()
-  }, [token, axiosInstance, kdsatker])
+  }, [token, axiosInstance, kdsatker, router])
 
   useEffect(() => {
     if (!anakSatkerList.length) return
@@ -95,7 +93,6 @@ export default function Page() {
       (item) => item.kdanak.includes(searchTerm) || item.nmanak.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
-    // Calculate start and end indices for current page
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
 
@@ -103,10 +100,8 @@ export default function Page() {
   }, [searchTerm, currentPage, itemsPerPage, anakSatkerList])
 
   if (!isClient) return null
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-  }
+  if (loading) return <div className="text-center p-10">Loading...</div>
+  if (error) return <div className="text-center text-red-500 p-10">{error}</div>
 
   const totalItems = anakSatkerList.filter(
     (item) => item.kdanak.includes(searchTerm) || item.nmanak.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -120,6 +115,7 @@ export default function Page() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-0">REFERENSI ANAK SATKER</h2>
         </div>
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
           <div className="flex items-center space-x-2">
             <label htmlFor="entries" className="mr-2">
@@ -133,7 +129,7 @@ export default function Page() {
                 const value = Number(e.target.value)
                 setEntries(value)
                 setItemsPerPage(value)
-                setCurrentPage(1) // Reset to first page when changing items per page
+                setCurrentPage(1)
               }}
             >
               <option value="10">10</option>
@@ -153,7 +149,9 @@ export default function Page() {
             />
           </div>
         </div>
+
         <div className="mt-4 mb-2 w-full border-t border-gray-300" />
+
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border-collapse border-gray-300 border responsive-table">
             <thead className="border">
@@ -177,7 +175,6 @@ export default function Page() {
                     <td className="px-6 border border-gray-300 py-4 text-center" data-label="Alamat">
                       {item.modul}
                     </td>
-
                     <td className="px-6 border border-gray-300 py-4 text-center" data-label="Aksi">
                       <div className="flex justify-center space-x-2">
                         <Link
@@ -197,38 +194,40 @@ export default function Page() {
                   </tr>
                 ))
               ) : (
-                <td colSpan={4} className="text-center py-4">
-                  Tidak ada data
-                </td>
+                <tr>
+                  <td colSpan={4} className="text-center py-4">
+                    Tidak ada data
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
 
         <div className="flex justify-end mt-4">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
-                >
-                  ‹
-                </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+            >
+              ‹
+            </button>
 
-                {/* Single page number button */}
-                <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
-                  {currentPage}
-                </span>
+            <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
+              {currentPage}
+            </span>
 
-                <button
-                  onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
-                >
-                  ›
-                </button>
-              </div>
-            </div>
+            <button
+              onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+
         <div className="flex justify-end space-x-2 mt-6">
           <button type="button" onClick={() => router.back()} className="px-4 py-2 bg-[#FFBD59] text-white rounded-md">
             Kembali

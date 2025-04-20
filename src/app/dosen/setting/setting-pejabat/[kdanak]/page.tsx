@@ -29,12 +29,9 @@ export default function Page() {
   const [pejabatList, setPejabatList] = useState<Pejabat[]>([])
 
   const [filteredData, setFilteredData] = useState<Pejabat[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [entries, setEntries] = useState(10)
   const [isClient, setIsClient] = useState(false)
@@ -42,8 +39,6 @@ export default function Page() {
   const kdanak = params.kdanak ?? ""
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
-  console.log("params:", params)
-  console.log("kdanak:", kdanak)
 
   const apiUrl = "http://localhost:8080"
 
@@ -75,7 +70,7 @@ export default function Page() {
       console.error("Error decoding token:", err)
       router.push("/")
     }
-  }, [isClient])
+  }, [isClient, router])
 
   useEffect(() => {
     if (!token) return
@@ -93,35 +88,27 @@ export default function Page() {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        setError("Gagal mengambil data PEJABAT")
-      } finally {
-        setLoading(false)
       }
     }
 
     getPejabat()
-  }, [token, axiosInstance, kdanak])
+  }, [token, axiosInstance, kdanak, router])
 
   useEffect(() => {
     if (!pejabatList.length) return
 
     const filtered = pejabatList.filter(
-      (item) => item.nip.includes(searchTerm) || item.nmpeg.toLowerCase().includes(searchTerm.toLowerCase()),
+      (item) => item.nip.includes(searchTerm) || item.nmpeg.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    // Calculate start and end indices for current page
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
 
     setFilteredData(filtered.slice(startIndex, endIndex))
   }, [searchTerm, currentPage, itemsPerPage, pejabatList])
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-  }
-
   const totalItems = pejabatList.filter(
-    (item) => item.nip.includes(searchTerm) || item.nmpeg.toLowerCase().includes(searchTerm.toLowerCase()),
+    (item) => item.nip.includes(searchTerm) || item.nmpeg.toLowerCase().includes(searchTerm.toLowerCase())
   ).length
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
@@ -194,7 +181,7 @@ export default function Page() {
                 const value = Number(e.target.value)
                 setEntries(value)
                 setItemsPerPage(value)
-                setCurrentPage(1) // Reset to first page when changing items per page
+                setCurrentPage(1)
               }}
             >
               <option value="10">10</option>
@@ -280,29 +267,28 @@ export default function Page() {
         </div>
 
         <div className="flex justify-end mt-4">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
-                >
-                  ‹
-                </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+            >
+              ‹
+            </button>
 
-                {/* Single page number button */}
-                <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
-                  {currentPage}
-                </span>
+            <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
+              {currentPage}
+            </span>
 
-                <button
-                  onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
-                >
-                  ›
-                </button>
-              </div>
-            </div>
+            <button
+              onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+            >
+              ›
+            </button>
+          </div>
+        </div>
         <div className="flex justify-end space-x-2 mt-6">
           <button type="button" onClick={() => router.back()} className="px-4 py-2 bg-[#FFBD59] text-white rounded-md">
             Kembali

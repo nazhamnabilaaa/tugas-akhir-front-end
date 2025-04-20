@@ -3,7 +3,6 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import Sidebar from "@/components/sidebar";
-import routes from "@/routes"; // Pastikan path ini benar
 
 // Gunakan dynamic import untuk AdminNavbar agar konsisten dengan dashboard
 const AdminNavbar = dynamic(() => import("@/components/navbar/AdminNavbar"), {

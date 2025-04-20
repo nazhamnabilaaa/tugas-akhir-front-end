@@ -3,12 +3,11 @@
 import React, { useState, useEffect } from "react";
 import useAxios from "../../useAxios";
 import { jwtDecode } from "jwt-decode";
-import {useParams, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx-js-style";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
 
 interface listTunjanganPegawai {
   kdanak: string;
@@ -24,7 +23,7 @@ interface listTunjanganPegawai {
   pajakpph: number;
   totalpph: number;
   jmlditerima: number;
-} 
+}
 
 interface TanggalTunjangan {
   kdanak: string;
@@ -57,15 +56,15 @@ interface Rektor {
 }
 
 export default function Page() {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [setLoading] = useState(true);
+  const [setError] = useState<string | null>(null);
   const params = useParams();
   const kdtunjangan = params.kdtunjangan ?? "";
 
-  const [selectedPejabat, setSelectedPejabat] = useState<string>(""); 
-  const [selectedNIP, setSelectedNIP] = useState<string>(""); 
-  const [selectedRektor, setSelectedRektor] = useState<string>(""); 
-  const [selectedNIPREKTOR, setSelectedNIPREKTOR] = useState<string>(""); 
+  const [selectedPejabat, setSelectedPejabat] = useState<string>("");
+  const [selectedNIP, setSelectedNIP] = useState<string>("");
+  const [selectedRektor, setSelectedRektor] = useState<string>("");
+  const [selectedNIPREKTOR, setSelectedNIPREKTOR] = useState<string>("");
   const [tanggalTunjangan, setTanggalTunjangan] = useState<TanggalTunjangan[]>([]);
   const [pejabatList, setPejabatList] = useState<Pejabat[]>([]);
   const [rektorList, setRektorList] = useState<Rektor[]>([]);
@@ -75,12 +74,9 @@ export default function Page() {
   const [totalJmlDiterima, setTotalJmlDiterima] = useState(0);
   const [showBesaranTunjangan, setShowBesaranTunjangan] = useState(false);
 
-
   const axiosInstance = useAxios();
   const router = useRouter();
   const [token, setToken] = useState("");
-  const [namalengkap, setNamalengkap] = useState("");
-  
 
   const apiUrl = "http://localhost:8080";
 
@@ -93,14 +89,13 @@ export default function Page() {
         try {
           const decoded = jwtDecode(accessToken);
           const currentTime = Math.floor(Date.now() / 1000);
-  
+
           if (decoded.exp && decoded.exp < currentTime) {
             console.warn("Token expired");
             localStorage.removeItem("accessToken"); // Hapus token expired
             router.push("/"); // Redirect ke login
           } else {
             setToken(accessToken);
-            setNamalengkap(decoded.namalengkap);
           }
         } catch (err) {
           console.error("Error decoding token:", err);
@@ -108,7 +103,7 @@ export default function Page() {
         }
       }
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!token) return;
@@ -125,24 +120,13 @@ export default function Page() {
           }),
         ]);
 
-        const data = [...profesiRes.data.Data, ...kehormatanRes.data.Data]; 
-        console.log("Combined Data:", data);
-
-        data.forEach((item, index) => {
-          console.log(`Data item ke-${index}:`, item);
-          console.log(`kdtunjangan item ke-${index}:`, item.kdtunjangan);
-        });
-
-        const filteredData = data.flatMap((item, index) => {
+        const data = [...profesiRes.data.Data, ...kehormatanRes.data.Data];
+        const filteredData = data.flatMap((item) => {
           if (Array.isArray(item)) {
-            return item.filter((innerItem) => {
-              console.log("Membandingkan kdtunjangan dalam innerItem:", innerItem.kdtunjangan);
-              return innerItem.kdtunjangan && String(innerItem.kdtunjangan) === String(kdtunjangan);
-            });
+            return item.filter((innerItem) => innerItem.kdtunjangan && String(innerItem.kdtunjangan) === String(kdtunjangan));
           }
           return [];
         });
-        
 
         setTanggalTunjangan(filteredData);
       } catch (error) {
@@ -156,12 +140,11 @@ export default function Page() {
     };
 
     GetTanggalTunjangan();
-  }, [token, axiosInstance]);
+  }, [token, kdtunjangan, axiosInstance, router]);
 
   useEffect(() => {
     if (!token) return;
-    console.log("kdtunjangan:", kdtunjangan);
-  
+
     const getListTunjangan = async () => {
       try {
         const response1 = await axiosInstance.get(`${apiUrl}/tunjangankehormatan`, {
@@ -170,25 +153,17 @@ export default function Page() {
         const response2 = await axiosInstance.get(`${apiUrl}/tunjanganprofesi`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
-        const data = [...response1.data.Data, ...response2.data.Data]; 
 
-        data.forEach((item, index) => {
-        });
-
-        const filteredData = data.flatMap((item, index) => {
+        const data = [...response1.data.Data, ...response2.data.Data];
+        const filteredData = data.flatMap((item) => {
           if (Array.isArray(item)) {
-            return item.filter((innerItem) => {
-              return innerItem.kdtunjangan && String(innerItem.kdtunjangan) === String(kdtunjangan);
-            });
+            return item.filter((innerItem) => innerItem.kdtunjangan && String(innerItem.kdtunjangan) === String(kdtunjangan));
           }
           return [];
         });
 
         const hasBesaranTunjangan = filteredData.some((item) => item.besartunjangan && item.besartunjangan > 0);
-
         setShowBesaranTunjangan(hasBesaranTunjangan);
-
         setListTunjangan(filteredData);
 
         const totalBesaran = filteredData.reduce((sum, item) => sum + item.besartunjangan, 0);
@@ -207,9 +182,9 @@ export default function Page() {
         setLoading(false);
       }
     };
-  
+
     getListTunjangan();
-  }, [token, kdtunjangan, axiosInstance]);
+  }, [token, kdtunjangan, axiosInstance, router]);
 
   useEffect(() => {
     if (!token) return;
@@ -231,7 +206,7 @@ export default function Page() {
     };
 
     getPejabat();
-  }, [token, axiosInstance]);
+  }, [token, axiosInstance, router]);
 
   useEffect(() => {
     if (!token) return;
@@ -253,7 +228,7 @@ export default function Page() {
     };
 
     getRektor();
-  }, [token, axiosInstance]);
+  }, [token, axiosInstance, router]);
 
   const mergedData = listTunjangan.map((item) => {
     const tanggalTunjanganItem = tanggalTunjangan.find((t) => t.kdtunjangan === item.kdtunjangan);
@@ -279,9 +254,9 @@ export default function Page() {
       { nilai: 4, simbol: "IV" },
       { nilai: 1, simbol: "I" }
     ];
-  
+
     let hasil = "";
-  
+
     for (let i = 0; i < romawi.length; i++) {
       while (angka >= romawi[i].nilai) {
         hasil += romawi[i].simbol;
@@ -294,25 +269,24 @@ export default function Page() {
   function formatTanggal(tanggal) {
     const date = new Date(tanggal);
     return date.toLocaleDateString("id-ID", {
-      day: 'numeric', // "2"
-      month: 'long', // "Januari"
-      year: 'numeric', // "2025"
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
   }
-  
 
   const exportToExcel = () => {
     if (listTunjangan.length === 0) {
       Swal.fire("Peringatan", "Tidak ada data untuk diekspor", "warning");
       return;
     }
-  
+
     const headerData = [
       ["DAFTAR PERHITUNGAN PEMBAYARAN"],
       [`TUNJANGAN: ${tanggalTunjangan.length > 0 ? tanggalTunjangan[0].jenisTunjangan : ""}`],
       [`Sesuai SK No. ..... /UN18/KP/...... Tanggal ${tanggalTunjangan.length > 0 ? formatTanggal(tanggalTunjangan[0].tanggal) : "-"}`]
     ];
-  
+
     const tableHeaders = [
       "Kode Anak",
       "Kode Tunjangan",
@@ -326,7 +300,7 @@ export default function Page() {
       "Nama Rekening",
       "No. Rekening"
     ].filter(Boolean);
-  
+
     const tableData = mergedData.map((item) => [
       item.kdanak,
       item.kdtunjangan,
@@ -340,17 +314,16 @@ export default function Page() {
       item.nmrek,
       item.rekening,
     ].filter(Boolean));
-  
+
     const sheetData = [
       ...headerData,
       [],
       tableHeaders,
       ...tableData,
     ];
-  
-    const ws = XLSX.utils.aoa_to_sheet(sheetData, { sheetStubs: true })
-  
-    // --- Style Header Dokumen ---
+
+    const ws = XLSX.utils.aoa_to_sheet(sheetData, { sheetStubs: true });
+
     const centerStyle = {
       alignment: { horizontal: "center", vertical: "center" },
       font: { bold: true, size: 14 }
@@ -358,16 +331,14 @@ export default function Page() {
     ws["A1"].s = centerStyle;
     ws["A2"].s = { ...centerStyle, font: { bold: true, size: 12 } };
     ws["A3"].s = { ...centerStyle, font: { italic: true, size: 11 } };
-  
-    // Merge kolom judul supaya rata tengah
+
     const mergeLength = tableHeaders.length - 1;
     ws["!merges"] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: mergeLength } },
       { s: { r: 1, c: 0 }, e: { r: 1, c: mergeLength } },
       { s: { r: 2, c: 0 }, e: { r: 2, c: mergeLength } },
     ];
-  
-    // --- Style Header Tabel ---
+
     const headerStyle = {
       font: { bold: true },
       fill: { fgColor: { rgb: "D9E1F2" } },
@@ -375,17 +346,16 @@ export default function Page() {
         top: { style: 'thin' },
         left: { style: 'thin' },
         bottom: { style: 'thin' },
-        right: { style: 'thin' }
+        right : { style: 'thin' }
       },
       alignment: { horizontal: "center", vertical: "center", wrapText: true }
     };
-  
+
     for (let i = 0; i < tableHeaders.length; i++) {
       const cell = ws[XLSX.utils.encode_cell({ r: 4, c: i })];
       if (cell) cell.s = headerStyle;
     }
-  
-    // --- Style Data Tabel ---
+
     tableData.forEach((row, rowIndex) => {
       row.forEach((_, colIndex) => {
         const cell = ws[XLSX.utils.encode_cell({ r: rowIndex + 5, c: colIndex })];
@@ -402,8 +372,7 @@ export default function Page() {
         }
       });
     });
-  
-    // --- Total Row ---
+
     const totalRow = [
       'JUMLAH TOTAL:',
       '', '', '', '',
@@ -414,7 +383,7 @@ export default function Page() {
     ];
     sheetData.push([]);
     sheetData.push(totalRow);
-  
+
     const totalRowIndex = sheetData.length - 1;
     totalRow.forEach((_, colIndex) => {
       const cell = ws[XLSX.utils.encode_cell({ r: totalRowIndex, c: colIndex })];
@@ -431,8 +400,7 @@ export default function Page() {
         };
       }
     });
-  
-    // --- Tanda Tangan ---
+
     const signData = [
       [],
       ["Mengetahui,"],
@@ -440,12 +408,11 @@ export default function Page() {
       [selectedRektor || "Belum Dipilih", "", "", "", "", "", "", "", selectedPejabat || "Belum Dipilih"],
       [`NIP: ${selectedNIPREKTOR || "Belum Dipilih"}`, "", "", "", "", "", "", "", `NIP: ${selectedNIP || "Belum Dipilih"}`]
     ];
-  
+
     sheetData.push(...signData);
-  
+
     const finalSheet = XLSX.utils.aoa_to_sheet(sheetData);
-  
-    // Merge untuk tanda tangan
+
     finalSheet["!merges"] = [
       ...ws["!merges"] || [],
       { s: { r: sheetData.length - 3, c: 0 }, e: { r: sheetData.length - 3, c: 2 } },
@@ -455,8 +422,7 @@ export default function Page() {
       { s: { r: sheetData.length - 1, c: 0 }, e: { r: sheetData.length - 1, c: 2 } },
       { s: { r: sheetData.length - 1, c: 8 }, e: { r: sheetData.length - 1, c: 10 } },
     ];
-  
-    // === AUTO-WIDTH ===
+
     const allRows = [tableHeaders, ...tableData, totalRow];
     const columnWidths = allRows[0].map((_, colIndex) => {
       const maxWidth = allRows.reduce((max, row) => {
@@ -467,23 +433,22 @@ export default function Page() {
       return { wch: maxWidth + 2 };
     });
     finalSheet["!cols"] = columnWidths;
-  
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, finalSheet, "Tunjangan");
     XLSX.writeFile(wb, `Tunjangan_${kdtunjangan}.xlsx`);
   };
-  
 
   const exportToPDF = () => {
     if (listTunjangan.length === 0) {
       Swal.fire("Peringatan", "Tidak ada data untuk diekspor", "warning");
       return;
     }
-  
+
     const doc = new jsPDF({ orientation: 'landscape' });
     const pageWidth = doc.internal.pageSize.getWidth();
-    const centerX = pageWidth / 2; 
-    
+    const centerX = pageWidth / 2;
+
     // Header Dokumen
     doc.setFontSize(14);
     doc.text("DAFTAR PERHITUNGAN PEMBAYARAN", centerX, 15, { align: "center" });
@@ -553,7 +518,6 @@ export default function Page() {
         currentPage++;
     }
 
-
     // Menampilkan Total
     const totalY = startY + 10;
     doc.setFontSize(10);
@@ -580,7 +544,7 @@ export default function Page() {
     doc.text("Mengetahui,", 14, signY);
     doc.text("Kuasa Pengguna Anggaran,", 14, signY + 6);
     doc.text(selectedRektor || "Belum Dipilih", 14, signY + 30);
-    doc.text(`NIP: ${selectedNIPREKTOR || "Belum Dipilih"}`, 14, signY + 36);
+    doc .text(`NIP: ${selectedNIPREKTOR || "Belum Dipilih"}`, 14, signY + 36);
 
     const marginRight = 20;
     doc.text("Pejabat Pembuat Komitmen,", pageWidth - marginRight, signY + 6, { align: "right" });
@@ -588,8 +552,8 @@ export default function Page() {
     doc.text(`NIP: ${selectedNIP || "Belum Dipilih"}`, pageWidth - marginRight, signY + 36, { align: "right" });
 
     doc.save(`Tunjangan_${kdtunjangan}.pdf`);
-};
-  
+  };
+
   return (
     <div className="flex flex-col p-6">
       <h2 className="text-center font-bold text-lg mb-2 text-black">
@@ -677,7 +641,7 @@ export default function Page() {
                 JUMLAH
               </td>
               {showBesaranTunjangan && (
-                <td className="border border-gray-500 px-3 py-2 text-center">
+                <td className="border border-gray-500 px -3 py-2 text-center">
                   Rp {totalBesartunjangan.toLocaleString("id-ID")}
                 </td>
               )}

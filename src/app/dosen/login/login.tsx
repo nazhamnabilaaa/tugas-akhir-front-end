@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Login } from "../../../../public/assets/img/logo";
-import routes from "@/routes"; // Jika file ada di src/routes.ts
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
@@ -12,7 +11,6 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
   const [msg, setMsg] = useState("");
 
   const apiUrl = "http://localhost:8080";

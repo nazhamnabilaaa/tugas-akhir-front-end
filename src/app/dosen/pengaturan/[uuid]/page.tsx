@@ -2,43 +2,34 @@
 
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/navbar/navbar"; // Import the Navbar component
-import routes from "@/routes"; // Jika file ada di src/routes.ts
 import useAxios from "../../../useAxios";
 import { jwtDecode } from "jwt-decode";
-import {useParams, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
 
-interface Users {
-  uuid: string;
-  username: string;
-  namalengkap: string;
-  email: string;
-  nip: string;
-  notelp: string;
-  alamat: string;
-  role: string;
-} 
+// interface Users {
+//   uuid: string;
+//   username: string;
+//   namalengkap: string;
+//   email: string;
+//   nip: string;
+//   notelp: string;
+//   alamat: string;
+//   role: string;
+// }
 
 export default function Page() {
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const axiosInstance = useAxios();
-  const router = useRouter();
-  const params = useParams();
-  const uuid = params.uuid ?? ""; 
   const [token, setToken] = useState("");
-  const [namalengkap, setNamalengkap] = useState("");
-  const apiUrl = "http://localhost:8080";
-  
-
-  const [users, setUsers] = useState<Users[]>([]);
   const [formData, setFormData] = useState({
     oldPassword: "",
     newPassword: "",
     confNewPassword: "",
   });
+  const axiosInstance = useAxios();
+  const router = useRouter();
+  const params = useParams();
+  const uuid = params.uuid ?? ""; // memastikan uuid terisi
+  const apiUrl = "http://localhost:8080";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -49,14 +40,13 @@ export default function Page() {
         try {
           const decoded = jwtDecode(accessToken);
           const currentTime = Math.floor(Date.now() / 1000);
-  
+
           if (decoded.exp && decoded.exp < currentTime) {
             console.warn("Token expired");
             localStorage.removeItem("accessToken"); // Hapus token expired
             router.push("/"); // Redirect ke login
           } else {
             setToken(accessToken);
-            setNamalengkap(decoded.namalengkap);
           }
         } catch (err) {
           console.error("Error decoding token:", err);
@@ -64,40 +54,30 @@ export default function Page() {
         }
       }
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
-    console.log("params:", params); // Debugging params
-    console.log("uuid:", uuid); // Debugging UUID
-  
     if (!token || !uuid) {
       console.warn("Token atau uuid belum tersedia, menunggu...");
       return;
     }
-  
+
     const GetUsersByUUID = async () => {
-      setLoading(true);
       try {
         const response = await axiosInstance.get(`${apiUrl}/users/${uuid}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
+
         if (response.data && response.data.Data && response.data.Data.length > 0) {
-          const detailData = response.data.Data[0];
-  
-          setUsers(response.data.Data);
+          // Tidak perlu mendeklarasikan `detailData` karena tidak digunakan
         } else {
           console.warn("Data tidak ditemukan.");
-          setUsers([]);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        setError("Gagal mengambil data Tanggal Kehormatan");
-      } finally {
-        setLoading(false);
       }
     };
-  
+
     GetUsersByUUID();
   }, [uuid, token, axiosInstance]);
 
@@ -121,7 +101,7 @@ export default function Page() {
       });
       return;
     }
-    
+
     if (formData.newPassword !== formData.confNewPassword) {
       await Swal.fire({
         title: "Error",
@@ -186,17 +166,13 @@ export default function Page() {
       <Navbar />
       <div className="text-black flex justify-center items-center">
         <div className="w-full max-w-xl bg-white p-6 rounded-lg shadow-lg mt-10 flex flex-col justify-center items-center ">
-          {/* Flexbox untuk konten */}
           <div className="flex justify-between items-center mb-4 w-full">
             <h2 className="text-2xl font-bold text-center w-full">
               Ubah Kata Sandi
-            </h2>{" "}
-            {/* Menambahkan text-center agar judul terpusat */}
+            </h2>
           </div>
           <div className="flex flex-col md:flex-row md:space-x-8 w-full justify-center items-center">
-            {/* Form Fields */}
             <div className="flex-1 space-y-4 w-full max-w-md">
-              {/* Menambahkan max-width dan fleksibilitas agar form tidak terlalu besar */}
               <div className="space-y-2">
                 <div>
                   <label className="text-xl text-black" htmlFor="name">

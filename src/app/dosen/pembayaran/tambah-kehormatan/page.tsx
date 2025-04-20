@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Navbar from "@/components/navbar/navbar";
-import type { TunjanganKehormatan } from "@/types/tunjangan-kehormatan";
 import useAxios from "../../../useAxios";
 import { jwtDecode } from "jwt-decode";
 import { useRouter } from "next/navigation";
@@ -19,9 +18,9 @@ export default function TambahKehormatanPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [konfigurasi, setKonfigurasi] = useState<AnakSatkerData[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [namalengkap, setNamalengkap] = useState("");
+    const [setLoading] = useState(true);
+    const [setError] = useState<string | null>(null);
+    const [setNamalengkap] = useState("");
     const [formData, setFormData] = useState({
       kdanak: "",
       kdtunjangan: "",

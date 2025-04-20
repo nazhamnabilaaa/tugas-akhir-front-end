@@ -24,8 +24,6 @@ interface TanggalTunjangan {
 
 export default function Page() {
   const [tanggalTunjangan, setTanggalTunjangan] = useState<TanggalTunjangan[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [filteredData, setFilteredData] = useState<TanggalTunjangan[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [entries, setEntries] = useState(10)
@@ -36,7 +34,6 @@ export default function Page() {
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -52,11 +49,10 @@ export default function Page() {
 
           if (decoded.exp && decoded.exp < currentTime) {
             console.warn("Token expired")
-            localStorage.removeItem("accessToken") // Hapus token expired
-            router.push("/") // Redirect ke login
+            localStorage.removeItem("accessToken")
+            router.push("/")
           } else {
             setToken(accessToken)
-            setNamalengkap(decoded.namalengkap)
           }
         } catch (err) {
           console.error("Error decoding token:", err)
@@ -64,13 +60,12 @@ export default function Page() {
         }
       }
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (!token) return
 
     const fetchData = async () => {
-      setLoading(true)
       try {
         const [profesiRes, kehormatanRes] = await Promise.all([
           axiosInstance.get(`${apiUrl}/tanggalprofesi`, {
@@ -84,31 +79,25 @@ export default function Page() {
         const profesiData = profesiRes.data.Data || []
         const kehormatanData = kehormatanRes.data.Data || []
 
-        // Pastikan Data adalah array sebelum digabungkan
         const combinedData = [...kehormatanData, ...profesiData].flat()
         console.log("Combined Data:", combinedData)
 
         setTanggalTunjangan(combinedData)
       } catch (error) {
         console.error("Error fetching data:", error)
-        setError("Gagal mengambil data.")
         localStorage.removeItem("accessToken")
         router.push("/")
-      } finally {
-        setLoading(false)
       }
     }
 
     fetchData()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, router])
 
   useEffect(() => {
     if (!tanggalTunjangan.length) return
 
     const filtered = tanggalTunjangan.filter((item) => {
-      // Format the date for searching
       const formattedDate = new Date(item.tanggal).toISOString().split("T")[0].split("-").reverse().join("/")
-
       const searchLower = searchTerm.toLowerCase()
       const matchesSearch =
         searchTerm === "" ||
@@ -125,25 +114,16 @@ export default function Page() {
       return matchesSearch && matchesYear
     })
 
-    // Calculate pagination
     const indexOfLastItem = currentPage * itemsPerPage
     const indexOfFirstItem = indexOfLastItem - itemsPerPage
-    setFilteredData(filtered.slice(indexOfFirstItem, indexOfFirstItem + itemsPerPage))
-
-    // Update entries state to match itemsPerPage
+    setFilteredData(filtered.slice(indexOfFirstItem, indexOfLastItem))
     setItemsPerPage(entries)
   }, [searchTerm, entries, tanggalTunjangan, selectedYear, currentPage, itemsPerPage])
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
 
   const totalPages =
     Math.ceil(
       tanggalTunjangan.filter((item) => {
-        // Format the date for searching
         const formattedDate = new Date(item.tanggal).toISOString().split("T")[0].split("-").reverse().join("/")
-
         const searchLower = searchTerm.toLowerCase()
         const matchesSearch =
           searchTerm === "" ||
@@ -163,11 +143,9 @@ export default function Page() {
 
   return (
     <div className="flex flex-col">
-      {/* Navbar */}
       <AdminNavbar />
 
       <div className="flex">
-        {/* Sidebar */}
         <Sidebar />
         <section className="flex-1 text-black px-16">
           <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
@@ -242,48 +220,34 @@ export default function Page() {
                     <tr key={index} className="border">
                       <td className="px-6 border border-gray-300 py-4 text-center">{item.kdanak}</td>
                       <td className="px-6 border border-gray-300 py-4 text-center">{item.kdtunjangan}</td>
-                      <td className="px-6 border border-gray-300py-4 text-center">
+                      <td className="px-6 border border-gray-300 py-4 text-center">
                         {new Date(item.tanggal).toISOString().split("T")[0].split("-").reverse().join("/")}
                       </td>
-                      <td className="px-6 border border-gray-300py-4 text-center">{item.bulan}</td>
-                      <td className="px-6 border border-gray-300py-4 text-center">{item.tahun}</td>
-                      <td className="px-6 border border-gray-300py-4 text-center">{item.keterangan}</td>
+                      <td className="px-6 border border-gray-300 py-4 text-center">{item.bulan}</td>
+                      <td className="px-6 border border-gray-300 py-4 text-center">{item.tahun}</td>
+                      <td className="px-6 border border-gray-300 py-4 text-center">{item.keterangan}</td>
                       <td className="px-4 border border-gray-300 py-2 text-center">
                         <div className="flex flex-col items-center space-y-2">
                           <div className="flex space-x-2">
                             <button className="w-30 h-10 bg-[#FFBD59] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer">
-                              <Link
-                                href={`/pdf-lampiran/${item.kdtunjangan}`}
-                                className="w-full h-full flex items-center justify-center"
-                              >
+                              <Link href={`/pdf-lampiran/${item.kdtunjangan}`} className="w-full h-full flex items-center justify-center">
                                 Lampiran
                               </Link>
                             </button>
                             <button className="w-30 h-10 bg-[#5575E7] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer">
-                              <Link
-                                href={`/pdf-adk/${item.kdtunjangan}`}
-                                className="w-full h-full flex items-center justify-center"
-                              >
+                              <Link href={`/pdf-adk/${item.kdtunjangan}`} className="w-full h-full flex items-center justify-center">
                                 ADK
                               </Link>
                             </button>
                             <button className="w-30 h-10 bg-[#E85FB9] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer">
-                              <Link
-                                href={`/pdf-spm/${item.kdtunjangan}`}
-                                className="w-full h-full flex items-center justify-center"
-                              >
+                              <Link href={`/pdf-spm/${item.kdtunjangan}`} className="w-full h-full flex items-center justify-center">
                                 SPM
                               </Link>
                             </button>
                           </div>
-
-                          {/* Baris kedua: Lampiran, SSP, SPTJM */}
                           <div className="flex space-x-2">
                             <button className="w-30 h-10 bg-[#7C93C3] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer">
-                              <Link
-                                href={`/pdf-sptjm/${item.kdtunjangan}`}
-                                className="w-full h-full flex items-center justify-center"
-                              >
+                              <Link href={`/pdf-sptjm/${item.kdtunjangan}`} className="w-full h-full flex items-center justify-center">
                                 SPTJM
                               </Link>
                             </button>
@@ -294,7 +258,7 @@ export default function Page() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="text-center py-4">
+                    <td colSpan={7} className="text-center py-4">
                       Tidak ada data yang tersedia
                     </td>
                   </tr>
@@ -312,7 +276,6 @@ export default function Page() {
                   ‹
                 </button>
 
-                {/* Single page number button */}
                 <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
                   {currentPage}
                 </span>

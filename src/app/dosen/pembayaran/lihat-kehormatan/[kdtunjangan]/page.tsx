@@ -73,9 +73,9 @@ interface listTunjanganPegawai {
 
 export default function Page() {
   //Tanggal Tunjangan
-  const [tanggalkehormatanList, setTanggalkehormatanList] = useState<TanggalKehormatan[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [, setTanggalkehormatanList] = useState<TanggalKehormatan[]>([])
+  const [, setLoading] = useState(true)
+  const [, setError] = useState<string | null>(null)
   const params = useParams()
   const kdtunjangan = params.kdtunjangan ?? ""
   const [formData, setFormData] = useState({
@@ -114,12 +114,12 @@ export default function Page() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [listTunjangan, setListTunjangan] = useState<listTunjanganPegawai[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const itemsPerPage = 10
 
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
+  const [, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -147,7 +147,7 @@ export default function Page() {
         }
       }
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     console.log("params:", params) // Debugging params
@@ -190,7 +190,7 @@ export default function Page() {
     }
 
     GetTanggalKehormatanByKDTunjangan()
-  }, [kdtunjangan, token, axiosInstance])
+  }, [kdtunjangan, token, axiosInstance, params])
 
   useEffect(() => {
     if (!token) return
@@ -214,7 +214,7 @@ export default function Page() {
     }
 
     getSatker()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -321,7 +321,7 @@ export default function Page() {
       }
     }
     getPegawai()
-  }, [token, axiosInstance, kdtunjangan])
+  }, [token, axiosInstance, kdtunjangan, router])
 
   useEffect(() => {
     if (!token) return
@@ -347,7 +347,7 @@ export default function Page() {
       }
     }
     getListTunjangan()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, kdtunjangan, router])
 
   // Handle individual checkbox change
   const handleCheckboxChange = (index) => {
@@ -809,29 +809,29 @@ export default function Page() {
 
           {/* Pagination */}
           <div className="flex justify-end mt-4">
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
-                >
-                  ‹
-                </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+              >
+                ‹
+              </button>
 
-                {/* Single page number button */}
-                <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
-                  {currentPage}
-                </span>
+              {/* Single page number button */}
+              <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
+                {currentPage}
+              </span>
 
-                <button
-                  onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
-                >
-                  ›
-                </button>
-              </div>
+              <button
+                onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
+              >
+                ›
+              </button>
             </div>
+          </div>
         </div>
 
         <div className="w-full bg-white p-6 rounded-lg shadow-lg mt-10">

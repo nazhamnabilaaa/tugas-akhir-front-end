@@ -22,9 +22,6 @@ interface TanggalProfesi {
 
 export default function Page() {
   const [tanggalprofesiList, setTanggalprofesiList] = useState<TanggalProfesi[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [filteredData, setFilteredData] = useState<TanggalProfesi[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [entries, setEntries] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
@@ -33,7 +30,6 @@ export default function Page() {
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -44,7 +40,7 @@ export default function Page() {
         router.push("/")
       } else {
         try {
-          const decoded = jwtDecode<{ exp: number; namalengkap: string }>(accessToken)
+          const decoded = jwtDecode<{ exp: number }>(accessToken)
           const currentTime = Math.floor(Date.now() / 1000)
 
           if (decoded.exp && decoded.exp < currentTime) {
@@ -53,7 +49,6 @@ export default function Page() {
             router.push("/") // Redirect ke login
           } else {
             setToken(accessToken)
-            setNamalengkap(decoded.namalengkap)
           }
         } catch (err) {
           console.error("Error decoding token:", err)
@@ -61,7 +56,7 @@ export default function Page() {
         }
       }
     }
-  }, [])
+  }, [router]) // Menambahkan router pada dependensi useEffect
 
   useEffect(() => {
     if (!token) return
@@ -72,20 +67,16 @@ export default function Page() {
           headers: { Authorization: `Bearer ${token}` },
         })
 
-        // Ambil hanya data yang bisa di-map
         setTanggalprofesiList(response.data.Data[0] || [])
       } catch (error) {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        setError("Gagal mengambil data Tanggal PROFESI")
-      } finally {
-        setLoading(false)
       }
     }
 
     getTanggalProfesi()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, router]) // Menambahkan router pada dependensi useEffect
 
   const handleDelete = async (kdtunjangan: string) => {
     Swal.fire({
@@ -128,10 +119,6 @@ export default function Page() {
 
     setFilteredData(filtered.slice(startIndex, endIndex))
   }, [searchTerm, currentPage, itemsPerPage, tanggalprofesiList])
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-  }
 
   const totalItems = tanggalprofesiList.filter(
     (item) => item.kdtunjangan.includes(searchTerm) || item.kdanak.toLowerCase().includes(searchTerm.toLowerCase()),

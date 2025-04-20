@@ -2,9 +2,6 @@
 
 import React from "react";
 import Navbar from "@/components/navbar/navbar";
-import { GrAddCircle } from "react-icons/gr";
-import { TbTrash } from "react-icons/tb";
-import routes from "@/routes"; // Jika file ada di src/routes.ts
 
 export default function Page() {
   return (

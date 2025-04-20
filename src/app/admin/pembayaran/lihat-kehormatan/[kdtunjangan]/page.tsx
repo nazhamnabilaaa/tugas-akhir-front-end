@@ -24,14 +24,14 @@ interface AnakSatkerData {
   kdsatker: string
 }
 
-interface TanggalProfesi {
-  kdanak: string
-  kdtunjangan: string
-  bulan: string
-  tahun: string
-  keterangan: string
-  tanggal: string
-}
+// interface TanggalProfesi {
+//   kdanak: string
+//   kdtunjangan: string
+//   bulan: string
+//   tahun: string
+//   keterangan: string
+//   tanggal: string
+// }
 
 interface Employee {
   nmpeg: string
@@ -78,9 +78,9 @@ interface listTunjanganPegawai {
 
 export default function Page() {
   //Tanggal Tunjangan
-  const [tanggalprofesiList, setTanggalprofesiList] = useState<TanggalProfesi[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // const [tanggalprofesiList, setTanggalprofesiList] = useState<TanggalProfesi[]>([])
+  // const [loading, setLoading] = useState(true)
+  // const [error, setError] = useState<string | null>(null)
   const params = useParams()
   const kdtunjangan = params.kdtunjangan ?? ""
   const [formData, setFormData] = useState({
@@ -95,8 +95,8 @@ export default function Page() {
 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectAll, setSelectAll] = useState(false)
-  const [selectedItems, setSelectedItems] = useState([]) // Array for row selection
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedItems, setSelectedItems] = useState([false]);
   const [editingRow, setEditingRow] = useState(null)
   const [salaryData, setSalaryData] = useState([
     {
@@ -118,12 +118,12 @@ export default function Page() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [listTunjangan, setListTunjangan] = useState<listTunjanganPegawai[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const itemsPerPage = 10
 
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [namalengkap, setNamalengkap] = useState("")
+  // const [namalengkap, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -143,7 +143,7 @@ export default function Page() {
             router.push("/") // Redirect ke login
           } else {
             setToken(accessToken)
-            setNamalengkap(decoded.namalengkap)
+            // setNamalengkap(decoded.namalengkap)
           }
         } catch (err) {
           console.error("Error decoding token:", err)
@@ -151,7 +151,7 @@ export default function Page() {
         }
       }
     }
-  }, [])
+  }, [router])
 
   useEffect(() => {
     console.log("params:", params) // Debugging params
@@ -163,7 +163,7 @@ export default function Page() {
     }
 
     const GetTanggalProfesiByKDTunjangan = async () => {
-      setLoading(true)
+      // setLoading(true)
       try {
         const response = await axiosInstance.get(`${apiUrl}/tanggalprofesi/${kdtunjangan}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -172,7 +172,7 @@ export default function Page() {
         if (response.data && response.data.Data && response.data.Data.length > 0) {
           const detailData = response.data.Data[0]
 
-          setTanggalprofesiList(response.data.Data)
+          // setTanggalprofesiList(response.data.Data)
           setFormData({
             kdanak: detailData.kdanak || "",
             kdtunjangan: detailData.kdtunjangan || "",
@@ -183,18 +183,18 @@ export default function Page() {
           })
         } else {
           console.warn("Data tidak ditemukan.")
-          setTanggalprofesiList([])
+          // setTanggalprofesiList([])
         }
       } catch (error) {
         console.error("Error fetching data:", error)
-        setError("Gagal mengambil data Tanggal Profesi")
+        // setError("Gagal mengambil data Tanggal Profesi")
       } finally {
-        setLoading(false)
+        // setLoading(false)
       }
     }
 
     GetTanggalProfesiByKDTunjangan()
-  }, [kdtunjangan, token, axiosInstance])
+  }, [kdtunjangan, token, axiosInstance, params])
 
   useEffect(() => {
     if (!token) return
@@ -211,14 +211,14 @@ export default function Page() {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        setError("Gagal mengambil data Satuan Kerja Fakultas")
+        // setError("Gagal mengambil data Satuan Kerja Fakultas")
       } finally {
-        setLoading(false)
+        // setLoading(false)
       }
     }
 
     getSatker()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -312,8 +312,7 @@ export default function Page() {
         setEmployees(pegawaiData)
 
         setSelectedItems(Array(pegawaiData.length).fill(false))
-        setSalaryData(
-          pegawaiData.map((pegawai) => ({
+        setSalaryData(pegawaiData.map((pegawai: Employee) => ({
             kdtunjangan: kdtunjangan,
             nip: pegawai.nip,
             nmpeg: pegawai.nmpeg,
@@ -333,13 +332,13 @@ export default function Page() {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        setError("Gagal mengambil data Pegawai")
+        // setError("Gagal mengambil data Pegawai")
       } finally {
-        setLoading(false)
+        // setLoading(false)
       }
     }
     getPegawai()
-  }, [token, axiosInstance, kdtunjangan])
+  }, [token, axiosInstance, kdtunjangan, router])
 
   useEffect(() => {
     if (!token) return
@@ -359,13 +358,13 @@ export default function Page() {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        setError("Gagal mengambil data Pegawai")
+        // setError("Gagal mengambil data Pegawai")
       } finally {
-        setLoading(false)
+        // setLoading(false)
       }
     }
     getListTunjangan()
-  }, [token, axiosInstance])
+  }, [token, axiosInstance, kdtunjangan, router])
 
   // Handle individual checkbox change
   const handleCheckboxChange = (index) => {
