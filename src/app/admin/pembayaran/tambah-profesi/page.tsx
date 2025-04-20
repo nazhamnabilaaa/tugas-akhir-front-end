@@ -26,9 +26,9 @@ export default function Page() {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [konfigurasi, setKonfigurasi] = useState<AnakSatkerData[]>([]);
-  // const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState<string | null>(null);
-  // const [namalengkap, setNamalengkap] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [namalengkap, setNamalengkap] = useState("");
   const [formData, setFormData] = useState({
     kdanak: "",
     kdtunjangan: "",

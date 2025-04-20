@@ -31,6 +31,8 @@ export default function Page() {
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
+  const [namalengkap, setNamalengkap] = useState("")
+
   const apiUrl = "http://localhost:8080"
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function Page() {
         router.push("/")
       } else {
         try {
-          const decoded = jwtDecode<{ exp: number }>(accessToken)
+          const decoded = jwtDecode<{ exp: number; namalengkap: string }>(accessToken)
           const currentTime = Math.floor(Date.now() / 1000)
 
           if (decoded.exp && decoded.exp < currentTime) {
@@ -49,6 +51,7 @@ export default function Page() {
             router.push("/")
           } else {
             setToken(accessToken)
+            setNamalengkap(decoded.namalengkap)
           }
         } catch (err) {
           console.error("Error decoding token:", err)
@@ -56,7 +59,7 @@ export default function Page() {
         }
       }
     }
-  }, [router]) // Add router to the dependency array
+  }, [])
 
   useEffect(() => {
     if (!token) return
@@ -93,10 +96,12 @@ export default function Page() {
     fetchData()
   }, [token, axiosInstance])
 
+  // Filter data based on search term and selected year
   useEffect(() => {
     if (!tanggalTunjangan.length) return
 
     const filtered = tanggalTunjangan.filter((item) => {
+      // Format the date for searching
       const formattedDate = new Date(item.tanggal).toISOString().split("T")[0].split("-").reverse().join("/")
 
       const matchesSearch =
@@ -115,17 +120,25 @@ export default function Page() {
     })
 
     setFilteredData(filtered)
+    // Reset to first page when search criteria change
     setCurrentPage(1)
   }, [searchTerm, tanggalTunjangan, selectedYear])
 
+  // Handle pagination
   useEffect(() => {
     if (!filteredData.length) return
 
+    // Calculate start and end indices for current page
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length)
 
+    // This will update the displayed data based on pagination
     setDisplayedData(filteredData.slice(startIndex, endIndex))
   }, [currentPage, itemsPerPage, filteredData])
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+  }
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1
 
@@ -175,7 +188,7 @@ export default function Page() {
                 const value = Number(e.target.value)
                 setEntries(value)
                 setItemsPerPage(value)
-                setCurrentPage(1)
+                setCurrentPage(1) // Reset to first page when changing items per page
               }}
             >
               <option value="10">10</option>
@@ -217,18 +230,49 @@ export default function Page() {
                   <tr key={index} className="border">
                     <td className="px-6 border border-gray-300 py-4 text-center">{item.kdanak}</td>
                     <td className="px-6 border border-gray-300 py-4 text-center">{item.kdtunjangan}</td>
-                    <td className="px-6 border border-gray-300 py-4 text-center">
+                    <td className="px-6 border border-gray-300py-4 text-center">
                       {new Date(item.tanggal).toISOString().split("T")[0].split("-").reverse().join("/")}
                     </td>
-                    <td className="px-6 border border-gray-300 py-4 text-center">{item.bulan}</td>
-                    <td className="px-6 border border-gray-300 py-4 text-center">{item.tahun}</td>
-                    <td className="px-6 border border-gray-300 py-4 text-center">{item.keterangan}</td>
+                    <td className="px-6 border border-gray-300py-4 text-center">{item.bulan}</td>
+                    <td className="px-6 border border-gray-300py-4 text-center">{item.tahun}</td>
+                    <td className="px-6 border border-gray-300py-4 text-center">{item.keterangan}</td>
                     <td className="px-4 border border-gray-300 py-2 text-center">
                       <div className="flex flex-col items-center space-y-2">
                         <div className="flex space-x-2">
-                          <button className="w-30 h-10 bg-[#FFBD59] rounded-lg py-2 px-4 flex items-center justify-center text-center text-white text-xs cursor-pointer">
-                            <Link href={`/dashboard/export/tunjangan/print/${item.kdanak}`} target="_blank">
-                              Print
+                          <button className="w-30 h-10 bg-[#FFBD59] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer">
+                            <Link
+                              href={`/pdf-lampiran/${item.kdtunjangan}`}
+                              className="w-full h-full flex items-center justify-center"
+                            >
+                              Lampiran
+                            </Link>
+                          </button>
+                          <button className="w-30 h-10 bg-[#5575E7] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer">
+                            <Link
+                              href={`/pdf-adk/${item.kdtunjangan}`}
+                              className="w-full h-full flex items-center justify-center"
+                            >
+                              ADK
+                            </Link>
+                          </button>
+                          <button className="w-30 h-10 bg-[#E85FB9] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer">
+                            <Link
+                              href={`/pdf-spm/${item.kdtunjangan}`}
+                              className="w-full h-full flex items-center justify-center"
+                            >
+                              SPM
+                            </Link>
+                          </button>
+                        </div>
+
+                        {/* Baris kedua: Lampiran, SSP, SPTJM */}
+                        <div className="flex space-x-2">
+                          <button className="w-30 h-10 bg-[#7C93C3] rounded-lg py-2 px-4 flex items-center justify-center text-white hover:bg-gray-400 cursor-pointer">
+                            <Link
+                              href={`/pdf-sptjm/${item.kdtunjangan}`}
+                              className="w-full h-full flex items-center justify-center"
+                            >
+                              SPTJM
                             </Link>
                           </button>
                         </div>
@@ -238,8 +282,8 @@ export default function Page() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="text-center py-4 text-gray-500">
-                    {loading ? "Loading..." : error ? error : "No data found"}
+                  <td colSpan={7} className="text-center py-4">
+                    Tidak ada data yang tersedia
                   </td>
                 </tr>
               )}
@@ -248,26 +292,27 @@ export default function Page() {
         </div>
 
         {/* Pagination */}
-        <div className="mt-4 flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            <span>
-              Showing {currentPage} of {totalPages}
-            </span>
-          </div>
-          <div>
+        <div className="flex justify-end mt-4">
+          <div className="flex space-x-2">
             <button
+              onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage(currentPage - 1)}
-              className="bg-blue-500 text-white py-2 px-4 rounded disabled:bg-gray-300"
+              className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
             >
-              Previous
+              ‹
             </button>
+
+            {/* Single page number button */}
+            <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
+              {currentPage}
+            </span>
+
             <button
+              onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(currentPage + 1)}
-              className="bg-blue-500 text-white py-2 px-4 rounded disabled:bg-gray-300"
+              className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
             >
-              Next
+              ›
             </button>
           </div>
         </div>

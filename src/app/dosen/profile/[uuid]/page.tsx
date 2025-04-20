@@ -21,17 +21,17 @@ interface Users {
 
 export default function Page() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [setLoading] = useState(true);
-  const [setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const axiosInstance = useAxios();
   const router = useRouter();
   const params = useParams();
   const uuid = params.uuid ?? ""; 
   const [token, setToken] = useState("");
-  const [setUUID] = useState("");
+  const [UUID, setUUID] = useState("");
   const apiUrl = "http://localhost:8080";
 
-  const [setUsers] = useState<Users[]>([]);
+  const [users, setUsers] = useState<Users[]>([]);
   const [formData, setFormData] = useState({
     uuid: "",
     username: "",

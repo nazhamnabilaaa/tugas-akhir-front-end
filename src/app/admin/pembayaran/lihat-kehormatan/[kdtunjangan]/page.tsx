@@ -24,14 +24,14 @@ interface AnakSatkerData {
   kdsatker: string
 }
 
-// interface TanggalProfesi {
-//   kdanak: string
-//   kdtunjangan: string
-//   bulan: string
-//   tahun: string
-//   keterangan: string
-//   tanggal: string
-// }
+interface TanggalKehormatan {
+  kdanak: string
+  kdtunjangan: string
+  bulan: string
+  tahun: string
+  keterangan: string
+  tanggal: string
+}
 
 interface Employee {
   nmpeg: string
@@ -74,13 +74,14 @@ interface listTunjanganPegawai {
   pajakpph: string
   totalpph: string
   jmlditerima: string
+  besartunjangan: string
 }
 
 export default function Page() {
   //Tanggal Tunjangan
-  // const [tanggalprofesiList, setTanggalprofesiList] = useState<TanggalProfesi[]>([])
-  // const [loading, setLoading] = useState(true)
-  // const [error, setError] = useState<string | null>(null)
+  const [tanggalkehormatanList, setTanggalkehormatanList] = useState<TanggalKehormatan[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const params = useParams()
   const kdtunjangan = params.kdtunjangan ?? ""
   const [formData, setFormData] = useState({
@@ -95,8 +96,8 @@ export default function Page() {
 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectAll, setSelectAll] = useState(false)
+  const [selectedItems, setSelectedItems] = useState([]) // Array for row selection
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedItems, setSelectedItems] = useState([false]);
   const [editingRow, setEditingRow] = useState(null)
   const [salaryData, setSalaryData] = useState([
     {
@@ -110,6 +111,7 @@ export default function Page() {
       kdbankspan: "",
       rekening: "",
       npwp: "",
+      besartunjangan: "",
       pajakpph: "",
       totalpph: "",
       jmlditerima: "",
@@ -118,12 +120,12 @@ export default function Page() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [listTunjangan, setListTunjangan] = useState<listTunjanganPegawai[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  // const [namalengkap, setNamalengkap] = useState("")
+  const [namalengkap, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -143,7 +145,7 @@ export default function Page() {
             router.push("/") // Redirect ke login
           } else {
             setToken(accessToken)
-            // setNamalengkap(decoded.namalengkap)
+            setNamalengkap(decoded.namalengkap)
           }
         } catch (err) {
           console.error("Error decoding token:", err)
@@ -151,7 +153,7 @@ export default function Page() {
         }
       }
     }
-  }, [router])
+  }, [])
 
   useEffect(() => {
     console.log("params:", params) // Debugging params
@@ -162,17 +164,17 @@ export default function Page() {
       return
     }
 
-    const GetTanggalProfesiByKDTunjangan = async () => {
-      // setLoading(true)
+    const GetTanggalKehormatanByKDTunjangan = async () => {
+      setLoading(true)
       try {
-        const response = await axiosInstance.get(`${apiUrl}/tanggalprofesi/${kdtunjangan}`, {
+        const response = await axiosInstance.get(`${apiUrl}/tanggalkehormatan/${kdtunjangan}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
 
         if (response.data && response.data.Data && response.data.Data.length > 0) {
           const detailData = response.data.Data[0]
 
-          // setTanggalprofesiList(response.data.Data)
+          setTanggalkehormatanList(response.data.Data)
           setFormData({
             kdanak: detailData.kdanak || "",
             kdtunjangan: detailData.kdtunjangan || "",
@@ -183,18 +185,18 @@ export default function Page() {
           })
         } else {
           console.warn("Data tidak ditemukan.")
-          // setTanggalprofesiList([])
+          setTanggalkehormatanList([])
         }
       } catch (error) {
         console.error("Error fetching data:", error)
-        // setError("Gagal mengambil data Tanggal Profesi")
+        setError("Gagal mengambil data Tanggal Kehormatan")
       } finally {
-        // setLoading(false)
+        setLoading(false)
       }
     }
 
-    GetTanggalProfesiByKDTunjangan()
-  }, [kdtunjangan, token, axiosInstance, params])
+    GetTanggalKehormatanByKDTunjangan()
+  }, [kdtunjangan, token, axiosInstance])
 
   useEffect(() => {
     if (!token) return
@@ -211,14 +213,14 @@ export default function Page() {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        // setError("Gagal mengambil data Satuan Kerja Fakultas")
+        setError("Gagal mengambil data Satuan Kerja Fakultas")
       } finally {
-        // setLoading(false)
+        setLoading(false)
       }
     }
 
     getSatker()
-  }, [token, axiosInstance, router])
+  }, [token, axiosInstance])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -233,7 +235,7 @@ export default function Page() {
 
     const confirmation = await Swal.fire({
       title: "Simpan Data?",
-      text: "Apakah Anda yakin ingin Meng-update data Tanggal Tunjangan Profesi ini?",
+      text: "Apakah Anda yakin ingin Meng-update data Tanggal Tunjangan Kehormatan ini?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
@@ -267,13 +269,13 @@ export default function Page() {
         kdanak: formData.kdanak,
       }
 
-      const response = await axiosInstance.patch(`${apiUrl}/tanggalprofesi/${formData.kdtunjangan}`, data, {
+      const response = await axiosInstance.patch(`${apiUrl}/tanggalkehormatan/${formData.kdtunjangan}`, data, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
       if (response.status === 200) {
         Swal.fire("Data berhasil di Update!", "", "success")
-        router.push(`/admin/pembayaran/lihat-profesi/${formData.kdtunjangan}`)
+        router.push(`/admin/pembayaran/lihat-kehormatan/${formData.kdtunjangan}`)
       } else {
         Swal.fire("Gagal menyimpan data!", "Coba lagi nanti.", "error")
       }
@@ -312,7 +314,8 @@ export default function Page() {
         setEmployees(pegawaiData)
 
         setSelectedItems(Array(pegawaiData.length).fill(false))
-        setSalaryData(pegawaiData.map((pegawai: Employee) => ({
+        setSalaryData(
+          pegawaiData.map((pegawai) => ({
             kdtunjangan: kdtunjangan,
             nip: pegawai.nip,
             nmpeg: pegawai.nmpeg,
@@ -323,6 +326,7 @@ export default function Page() {
             kdbankspan: pegawai.kdbankspan,
             rekening: pegawai.rekening,
             npwp: pegawai.npwp,
+            besartunjangan: "",
             pajakpph: "",
             totalpph: "",
             jmlditerima: "",
@@ -332,20 +336,20 @@ export default function Page() {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        // setError("Gagal mengambil data Pegawai")
+        setError("Gagal mengambil data Pegawai")
       } finally {
-        // setLoading(false)
+        setLoading(false)
       }
     }
     getPegawai()
-  }, [token, axiosInstance, kdtunjangan, router])
+  }, [token, axiosInstance, kdtunjangan])
 
   useEffect(() => {
     if (!token) return
 
     const getListTunjangan = async () => {
       try {
-        const response = await axiosInstance.get(`${apiUrl}/tunjanganprofesi`, {
+        const response = await axiosInstance.get(`${apiUrl}/tunjangankehormatan`, {
           headers: { Authorization: `Bearer ${token}` },
         })
 
@@ -358,13 +362,13 @@ export default function Page() {
         console.error("Error fetching users:", error)
         localStorage.removeItem("accessToken")
         router.push("/")
-        // setError("Gagal mengambil data Pegawai")
+        setError("Gagal mengambil data Pegawai")
       } finally {
-        // setLoading(false)
+        setLoading(false)
       }
     }
     getListTunjangan()
-  }, [token, axiosInstance, kdtunjangan, router])
+  }, [token, axiosInstance])
 
   // Handle individual checkbox change
   const handleCheckboxChange = (index) => {
@@ -380,7 +384,7 @@ export default function Page() {
       updatedSalaryData[index] = { ...salaryData[index] }
     } else {
       // Jika tidak dicentang, tetap gunakan data pegawai tanpa meresetnya ke kosong
-      updatedSalaryData[index] = { ...employees[index], pajakpph: "", totalpph: "", jmlditerima: "" }
+      updatedSalaryData[index] = { ...employees[index], besartunjangan: "", pajakpph: "", totalpph: "", jmlditerima: "" };
     }
 
     setSalaryData(updatedSalaryData)
@@ -404,6 +408,7 @@ export default function Page() {
           kdbankspan: pegawai.kdbankspan,
           rekening: pegawai.rekening,
           npwp: pegawai.npwp,
+          besartunjangan: "",
           pajakpph: "",
           totalpph: "",
           jmlditerima: "",
@@ -419,6 +424,7 @@ export default function Page() {
           kdbankspan: pegawai.kdbankspan,
           rekening: pegawai.rekening,
           npwp: pegawai.npwp,
+          besartunjangan: "",
           pajakpph: "",
           totalpph: "",
           jmlditerima: "",
@@ -507,7 +513,7 @@ export default function Page() {
 
       console.log("📌 Data yang dikirim ke backend:", JSON.stringify(formattedData, null, 2))
 
-      const response = await axiosInstance.patch(`${apiUrl}/tunjanganprofesi/${pegawai.nip}`, formattedData, {
+      const response = await axiosInstance.patch(`${apiUrl}/tunjangankehormatan/${pegawai.nip}`, formattedData, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -529,7 +535,7 @@ export default function Page() {
 
     const confirmation = await Swal.fire({
       title: "Simpan Data?",
-      text: "Apakah Anda yakin ingin menghitung data Tunjangan Profesi ini?",
+      text: "Apakah Anda yakin ingin menghitung data Tunjangan Kehormatan ini?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#3085d6",
@@ -570,7 +576,7 @@ export default function Page() {
     try {
       // 🔹 Kirim data dengan `kdtunjangan`
       const response = await axiosInstance.post(
-        `${apiUrl}/tunjanganprofesi/`,
+        `${apiUrl}/tunjangankehormatan/`,
         { kdtunjangan, pegawai: formattedSalaryData }, // Tambahkan `kdtunjangan`
         { headers: { Authorization: `Bearer ${token}` } },
       )
@@ -601,7 +607,7 @@ export default function Page() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axiosInstance.delete(`${apiUrl}/tunjanganprofesi/${nip}`, {
+          await axiosInstance.delete(`${apiUrl}/tunjangankehormatan/${nip}`, {
             headers: { Authorization: `Bearer ${token}` },
           })
 
@@ -629,7 +635,7 @@ export default function Page() {
         <section className="text-black px-16 flex-grow">
           <div className="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-lg mt-10">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">LIHAT TUNJANGAN PROFESI</h2>
+              <h2 className="text-2xl font-bold">LIHAT TUNJANGAN KEHORMATAN</h2>
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 mt-8">
@@ -753,7 +759,7 @@ export default function Page() {
 
           <div className="w-full bg-white p-6 rounded-lg shadow-lg mt-10">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">LIST PENERIMA TUNJANGAN PROFESI</h2>
+              <h2 className="text-2xl font-bold">LIST PENERIMA TUNJANGAN KEHORMATAN</h2>
             </div>
             <div className="flex justify-between items-center mb-4 mt-8">
               {/* Checkbox */}
@@ -810,7 +816,7 @@ export default function Page() {
             </table>
 
             {/* Pagination */}
-            <div className="flex justify-end mt-4">
+             <div className="flex justify-end mt-4">
               <div className="flex space-x-2">
                 <button
                   onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
@@ -842,9 +848,10 @@ export default function Page() {
                 <tr className="border">
                   <th className="border border-gray-300 px-6 py-4 text-center font-normal">Kode Tunjangan</th>
                   <th className="border border-gray-300 px-6 py-4 text-center font-normal">NIP</th>
-                  <th className="border border-gray-300 px-6 py-4 text-center font-normal">Nama Dosen</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center font-normal">Nama Pegawai</th>
                   <th className="border border-gray-300 px-6 py-4 text-center font-normal">Golongan</th>
                   <th className="border border-gray-300 px-6 py-4 text-center font-normal">Gaji Pokok</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center font-normal">Besar Tunjangan</th>
                   <th className="border border-gray-300 px-6 py-4 text-center font-normal">PPH</th>
                   <th className="border border-gray-300 px-6 py-4 text-center font-normal">Jumlah Diterima</th>
                   <th className="border border-gray-300 px-6 py-4 text-center font-normal">Aksi</th>
@@ -858,6 +865,7 @@ export default function Page() {
                     <td className="px-6 border border-gray-300 py-4 text-center">{item.nmpeg}</td>
                     <td className="px-6 border border-gray-300 py-4 text-center">{item.kdgol}</td>
                     <td className="px-6 border border-gray-300 py-4 text-center">{item.gjpokok.toLocaleString()}</td>
+                    <td className="px-6 border border-gray-300 py-4 text-center">{item.besartunjangan.toLocaleString()}</td>
                     <td className="px-6 border border-gray-300 py-4 text-center">{item.totalpph.toLocaleString()}</td>
                     <td className="px-6 border border-gray-300 py-4 text-center">
                       {item.jmlditerima.toLocaleString()}
@@ -880,7 +888,7 @@ export default function Page() {
             </table>
             <div className="flex justify-end">
               <Link
-                href={`/admin/pembayaran/lihat-profesi/${kdtunjangan}`}
+                href={`/admin/pembayaran/lihat-kehormatan/${kdtunjangan}`}
                 className="flex flex-col items-center cursor-pointer"
               >
                 <button
@@ -944,6 +952,16 @@ export default function Page() {
                       type="number"
                       name="gjpokok"
                       value={salaryData[editingRow].gjpokok}
+                      onChange={handleInputChange}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Besar Tunjangan</label>
+                    <input
+                      type="number"
+                      name="besartunjangan"
+                      value={salaryData[editingRow].besartunjangan}
                       onChange={handleInputChange}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />

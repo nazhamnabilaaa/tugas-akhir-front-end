@@ -72,9 +72,9 @@ interface listTunjanganPegawai {
 
 export default function Page() {
   //Tanggal Tunjangan
-  const [setTanggalprofesiList] = useState<TanggalProfesi[]>([])
-  const [setLoading] = useState(true)
-  const [setError] = useState<string | null>(null)
+  const [tanggalprofesiList, setTanggalprofesiList] = useState<TanggalProfesi[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const params = useParams()
   const kdtunjangan = params.kdtunjangan ?? ""
   const [formData, setFormData] = useState({
@@ -112,12 +112,12 @@ export default function Page() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [listTunjangan, setListTunjangan] = useState<listTunjanganPegawai[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(10)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
-  const [setNamalengkap] = useState("")
+  const [namalengkap, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 

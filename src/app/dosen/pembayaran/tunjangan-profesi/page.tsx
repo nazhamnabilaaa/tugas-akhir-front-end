@@ -26,6 +26,7 @@ export default function Page() {
   const [entries, setEntries] = useState(10)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [filteredData, setFilteredData] = useState<TanggalProfesi[]>([]);
 
   const axiosInstance = useAxios()
   const router = useRouter()

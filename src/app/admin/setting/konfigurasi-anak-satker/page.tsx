@@ -25,8 +25,8 @@ export default function Page() {
   const [modalMode, setModalMode] = useState<"add" | "edit">("add")
   const [editData, setEditData] = useState<AnakSatker | undefined>()
   const [anakSatkerList, setAnakSatkerList] = useState<AnakSatker[]>([])
-  // const [loading, setLoading] = useState(true)
-  // const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [filteredData, setFilteredData] = useState<AnakSatker[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [entries, setEntries] = useState(10)
@@ -36,6 +36,7 @@ export default function Page() {
   const axiosInstance = useAxios()
   const router = useRouter()
   const [token, setToken] = useState("")
+  const [namalengkap, setNamalengkap] = useState("")
 
   const apiUrl = "http://localhost:8080"
 
@@ -46,7 +47,7 @@ export default function Page() {
         router.push("/")
       } else {
         try {
-          const decoded = jwtDecode<{ exp: number }>(accessToken)
+          const decoded = jwtDecode<{ exp: number; namalengkap: string }>(accessToken)
           const currentTime = Math.floor(Date.now() / 1000)
 
           if (decoded.exp && decoded.exp < currentTime) {
@@ -55,6 +56,7 @@ export default function Page() {
             router.push("/") // Redirect ke login
           } else {
             setToken(accessToken)
+            setNamalengkap(decoded.namalengkap)
           }
         } catch (err) {
           console.error("Error decoding token:", err)
@@ -62,7 +64,7 @@ export default function Page() {
         }
       }
     }
-  }, [router])
+  }, [])
 
   useEffect(() => {
     if (!token) return
@@ -86,7 +88,7 @@ export default function Page() {
     }
 
     getAnakSatker()
-  }, [token, axiosInstance, router])
+  }, [token, axiosInstance])
 
   const handleAdd = () => {
     setModalMode("add")
@@ -151,6 +153,10 @@ export default function Page() {
     setFilteredData(filtered.slice(startIndex, endIndex))
   }, [searchTerm, currentPage, itemsPerPage, anakSatkerList])
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+  }
+
   const totalItems = anakSatkerList.filter(
     (item) => item.kdanak.includes(searchTerm) || item.nmanak.toLowerCase().includes(searchTerm.toLowerCase()),
   ).length
@@ -210,63 +216,79 @@ export default function Page() {
               <thead className="border">
                 <tr className="border">
                   <th className="border border-gray-300 px-6 py-4 text-center">Kode Satker</th>
-                  <th className="border border-gray-300 px-6 py-4 text-center">Nama Anak Satker</th>
-                  <th className="border border-gray-300 px-6 py-4 text-center">Actions</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center">Kode Anak</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center">Nama Anak</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center">Jenis</th>
+                  <th className="border border-gray-300 px-6 py-4 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((anakSatker) => (
-                  <tr key={anakSatker.kdanak} className="border-t">
-                    <td className="border border-gray-300 px-6 py-4 text-center">{anakSatker.kdsatker}</td>
-                    <td className="border border-gray-300 px-6 py-4 text-center">{anakSatker.nmanak}</td>
-                    <td className="border border-gray-300 px-6 py-4 text-center">
-                      <button onClick={() => handleEdit(anakSatker)} className="px-2 py-1 text-blue-500 hover:underline">
-                        <FiEdit />
-                      </button>
-                      <button onClick={() => handleDelete(anakSatker.kdanak)} className="px-2 py-1 text-red-500 hover:underline">
-                        <TbTrash />
-                      </button>
+                {filteredData.length > 0 ? (
+                  filteredData.map((item, index) => (
+                    <tr key={index} className="border">
+                      <td className="px-6 border border-gray-300 py-4 text-center">{item.kdsatker}</td>
+                      <td className="px-6 border border-gray-300 py-4 text-center">{item.kdanak}</td>
+                      <td className="px-6 border border-gray-300 py-4 text-center">{item.nmanak}</td>
+                      <td className="px-6 border border-gray-300 py-4 text-center">{item.modul}</td>
+                      <td className="px-6 border border-gray-300 py-4 text-center">
+                        <div className="flex justify-center space-x-2">
+                          <FiEdit
+                            className="text-[#2552F4] text-lg cursor-pointer"
+                            onClick={() => handleEdit(item)} // Edit data
+                          />
+                          <TbTrash
+                            className="text-[#E20202] text-lg cursor-pointer"
+                            onClick={() => handleDelete(item.kdanak)} // Hapus data
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="text-center py-4">
+                      Tidak ada data ditemukan
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
-            <div className="flex justify-between items-center mt-4">
-              <div>
-                <span>
-                  Menampilkan {filteredData.length} dari {totalItems} entri
-                </span>
-              </div>
+
+             <div className="flex justify-end mt-4">
               <div className="flex space-x-2">
                 <button
+                  onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
                 >
-                  Prev
+                  ‹
                 </button>
+
+                {/* Single page number button */}
+                <span className="w-8 h-8 bg-[#18A3DC] rounded-full flex items-center justify-center text-black cursor-pointer">
+                  {currentPage}
+                </span>
+
                 <button
+                  onClick={() => currentPage < totalPages && setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+                  className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-black hover:bg-gray-400 cursor-pointer"
                 >
-                  Next
+                  ›
                 </button>
               </div>
             </div>
           </div>
+
+          <AnakSatkerModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleSave}
+            editData={editData}
+            mode={modalMode}
+          />
         </section>
       </div>
-
-      {isModalOpen && (
-        <AnakSatkerModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSave}
-          mode={modalMode}
-          initialData={editData}
-        />
-      )}
     </div>
   )
 }

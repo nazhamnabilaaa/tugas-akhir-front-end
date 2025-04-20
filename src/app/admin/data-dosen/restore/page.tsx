@@ -102,9 +102,11 @@ export default function Page() {
     const start = (currentPage - 1) * entries;
     const end = start + entries;
 
-    const filtered = restoreDataList.filter((item) =>
-      item.tahun.toString().includes(searchTerm)
-    );
+    const filtered = restoreDataList.filter(
+      (item) =>
+        item.KodeUpload.toString().includes(searchTerm) ||
+        item.tahun.toString().includes(searchTerm)
+    )
 
     setFilteredData(filtered.slice(start, end));
   }, [searchTerm, entries, currentPage, restoreDataList]);
@@ -161,7 +163,7 @@ export default function Page() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 >
-                  {[2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016].map((year) => (
+                  {[2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016].map((year) => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>

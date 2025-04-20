@@ -18,9 +18,9 @@ export default function TambahKehormatanPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
   const [konfigurasi, setKonfigurasi] = useState<AnakSatkerData[]>([]);
-    const [setLoading] = useState(true);
-    const [setError] = useState<string | null>(null);
-    const [setNamalengkap] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [namalengkap, setNamalengkap] = useState("");
     const [formData, setFormData] = useState({
       kdanak: "",
       kdtunjangan: "",
